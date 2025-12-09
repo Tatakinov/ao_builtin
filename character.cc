@@ -28,32 +28,47 @@ void Character::destroy(SDL_DisplayID id) {
     }
 }
 
+void dump(const Element &e, std::string indent = "") {
+    Logger::log(indent, e.filename.string());
+}
+
+void dump(const ElementWithChildren &e, std::string indent = "") {
+    for (auto &child : e.children) {
+        Logger::log(indent, "{");
+        std::visit([&](const auto &c) {
+            dump(c, indent + "    ");
+        }, child);
+        Logger::log(indent, "}");
+    }
+}
+
+
 bool Character::draw(std::unique_ptr<ImageCache> &cache, bool changed) {
     bool use_self_alpha = (parent_->getInfo("seriko.use_self_alpha", false) == "1");
-    auto list = seriko_->get(id_);
+    auto element = seriko_->get(id_);
     if (changed) {
         upconverted_ = false;
         requestAdjust();
     }
-    if (!prev_ || !(prev_.value() == list) || position_changed_ || changed || !upconverted_) {
-        position_changed_ = false;
-        prev_ = list;
-        bool upconverted = true;
-        for (auto &[_, v] : windows_) {
-            if (util::isWayland()) {
-                upconverted = upconverted && v->draw(cache, {rect_.x, rect_.y}, list, use_self_alpha);
-            }
-            else {
-                upconverted = upconverted && v->draw(cache, {0, 0}, list, use_self_alpha);
-            }
-        }
-        upconverted_ = upconverted;
-        for (auto &[_, v] : windows_) {
-            v->swapBuffers();
-        }
-        return true;
+    if (!prev_ || !(prev_.value() == element) || position_changed_ || changed || !upconverted_ || !cache_) {
+        cache_ = element.getSurface(cache);
     }
-    return false;
+    position_changed_ = false;
+    prev_ = element;
+    bool upconverted = true;
+    for (auto &[_, v] : windows_) {
+        if (util::isWayland()) {
+            upconverted = upconverted && v->draw(cache, {rect_.x, rect_.y}, cache_, element, use_self_alpha);
+        }
+        else {
+            upconverted = upconverted && v->draw(cache, {0, 0}, cache_, element, use_self_alpha);
+        }
+    }
+    upconverted_ = upconverted;
+    for (auto &[_, v] : windows_) {
+        v->swapBuffers();
+    }
+    return true;
 }
 
 void Character::show(bool force) {
@@ -504,4 +519,8 @@ void Character::wheel(const SDL_MouseWheelEvent &event) {
     for (auto &[_, v] : windows_) {
         v->wheel(event);
     }
+}
+
+void Character::reserveMenuParent(SDL_Window *window) {
+    parent_->reserveMenuParent(window);
 }

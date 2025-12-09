@@ -272,7 +272,7 @@ bool Ayu::init() {
     std::string exe_path;
     exe_path.resize(1024);
 #ifdef IS_WINDOWS
-    GetModuleFileName(NULL, exe_path.data(), 1024);
+    GetModuleFileName(nullptr, exe_path.data(), 1024);
 #else
     readlink("/proc/self/exe", exe_path.data(), 1024);
 #endif // OS
@@ -406,13 +406,17 @@ void Ayu::draw() {
                 alive_ = false;
                 return;
             case SDL_EVENT_DISPLAY_ADDED:
-                for (auto &[_, v] : characters_) {
-                    v->create(event.display.displayID);
+                if (util::isWayland()) {
+                    for (auto &[_, v] : characters_) {
+                        v->create(event.display.displayID);
+                    }
                 }
                 break;
             case SDL_EVENT_DISPLAY_REMOVED:
-                for (auto &[_, v] : characters_) {
-                    v->destroy(event.display.displayID);
+                if (util::isWayland()) {
+                    for (auto &[_, v] : characters_) {
+                        v->destroy(event.display.displayID);
+                    }
                 }
                 break;
             case SDL_EVENT_KEY_DOWN:
@@ -489,6 +493,10 @@ void Ayu::draw() {
     redrawn_ = false;
     for (auto k : keys) {
         redrawn_ = characters_.at(k)->draw(cache_, changed) || redrawn_;
+    }
+    if (menu_) {
+        menu_->draw();
+        menu_->swapBuffers();
     }
 }
 
@@ -598,4 +606,8 @@ void Ayu::enqueueDirectSSTP(std::vector<Request> list) {
         event_queue_.push(list);
     }
     cond_.notify_one();
+}
+
+void Ayu::reserveMenuParent(SDL_Window *window) {
+    menu_ = std::make_unique<Menu>(window);
 }

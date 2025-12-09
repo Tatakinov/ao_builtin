@@ -271,6 +271,7 @@ void Seriko::updateBind() {
     for (auto &[k, _] : actors_) {
         if (!binds_.contains(k)) {
             binds_[k] = parent_->isBinding(k);
+            Logger::log("updateBind: ", k);
             assert(binds_.contains(k));
             bind(k, binds_.at(k));
         }

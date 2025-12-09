@@ -23,7 +23,7 @@ struct Element {
         return lhs.method == rhs.method && lhs.x == rhs.x && lhs.y == rhs.y && lhs.filename == rhs.filename;
     }
     std::unique_ptr<WrapSurface> getSurface(std::unique_ptr<ImageCache> &cache) const;
-    std::unique_ptr<WrapTexture> getTexture(SDL_Renderer *renderer, std::unique_ptr<ImageCache> &cache) const;
+    std::unique_ptr<WrapTexture> getTexture(SDL_Renderer *renderer, std::unique_ptr<TextureCache> &texture_cache, std::unique_ptr<ImageCache> &image_cache) const;
 };
 
 template<>

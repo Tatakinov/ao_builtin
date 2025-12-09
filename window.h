@@ -43,6 +43,7 @@ class Window {
         Offset offset_;
         std::optional<std::vector<int>> shape_;
         SDL_Renderer *renderer_;
+        std::unique_ptr<TextureCache> texture_cache_;
 
     public:
         Window(Character *parent, SDL_DisplayID id);
@@ -55,10 +56,8 @@ class Window {
         void resize(int width, int height);
         void position(int x, int y);
         void focus(int focused);
-        void mouseButton(int button, int action, int mods);
-        void cursorPosition(double x, double y);
 
-        bool draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, const ElementWithChildren &element, const bool use_self_alpha);
+        bool draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool use_self_alpha);
         void swapBuffers();
 
         void setPosition(int x, int y) {

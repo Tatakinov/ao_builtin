@@ -12,6 +12,7 @@
 #include "logger.h"
 
 int main(int argc, char **argv) {
+    Logger::configure("out.dump");
     SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "io.github.tatakinov.ninix-kagari.ayu_builtin");
     if (!SDL_Init(SDL_INIT_VIDEO)) {

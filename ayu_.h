@@ -17,6 +17,7 @@
 
 #include "character.h"
 #include "image_cache.h"
+#include "menu.h"
 #include "misc.h"
 #include "surfaces.h"
 #include "util.h"
@@ -45,6 +46,7 @@ class Ayu {
         int scale_;
         bool loaded_;
         bool redrawn_;
+        std::unique_ptr<Menu> menu_;
 
     public:
         Ayu() : alive_(true), scale_(100), loaded_(false), redrawn_(false) {
@@ -96,6 +98,8 @@ class Ayu {
         std::string sendDirectSSTP(std::string method, std::string command, std::vector<std::string> args);
 
         void enqueueDirectSSTP(std::vector<Request> list);
+
+        void reserveMenuParent(SDL_Window *window);
 };
 
 #endif // GL_AYU_H_

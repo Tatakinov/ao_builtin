@@ -2,15 +2,20 @@
 #define TEXTURE_H_
 
 #include <cassert>
+#include <filesystem>
+#include <memory>
+#include <optional>
+#include <unordered_map>
 
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_surface.h>
 
-class ImageInfo;
+#include "image_cache.h"
 
 class WrapSurface {
     private:
         SDL_Surface *surface_;
+        bool is_upconverted_;
     public:
         WrapSurface(int w, int h);
         WrapSurface(ImageInfo &info);
@@ -26,14 +31,18 @@ class WrapSurface {
             assert(surface_);
             return surface_->h;
         }
+        bool isUpconverted() const {
+            return is_upconverted_;
+        }
 };
 
 class WrapTexture {
     private:
         SDL_Texture *texture_;
+        bool is_upconverted_;
     public:
         WrapTexture(SDL_Renderer *renderer, int w, int h);
-        WrapTexture(SDL_Renderer *renderer, SDL_Surface *surface);
+        WrapTexture(SDL_Renderer *renderer, SDL_Surface *surface, bool is_upconverted = false);
         ~WrapTexture();
         SDL_Texture *texture() {
             return texture_;
@@ -46,6 +55,19 @@ class WrapTexture {
             assert(texture_);
             return texture_->h;
         }
+        bool isUpconverted() const {
+            return is_upconverted_;
+        }
+};
+
+class TextureCache {
+    private:
+        SDL_Renderer *renderer_;
+        std::unordered_map<std::filesystem::path, std::unique_ptr<WrapTexture>> cache_;
+    public:
+        TextureCache();
+        ~TextureCache();
+        std::unique_ptr<WrapTexture> &get(const std::filesystem::path &path, SDL_Renderer *renderer, std::unique_ptr<ImageCache> &cache);
 };
 
 #endif // TEXTURE_H_

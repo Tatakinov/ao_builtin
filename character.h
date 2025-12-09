@@ -36,6 +36,7 @@ class Character {
         std::optional<ElementWithChildren> prev_;
         bool position_changed_;
         bool upconverted_;
+        std::unique_ptr<WrapSurface> cache_;
     public:
         Character(Ayu *parent, int side, const std::string &name, std::unique_ptr<Seriko> seriko);
         ~Character();
@@ -99,6 +100,7 @@ class Character {
         void motion(const SDL_MouseMotionEvent &event);
         void button(const SDL_MouseButtonEvent &event);
         void wheel(const SDL_MouseWheelEvent &event);
+        void reserveMenuParent(SDL_Window *);
 };
 
 #endif // CHARACTER_H_
