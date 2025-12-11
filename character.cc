@@ -50,25 +50,27 @@ bool Character::draw(std::unique_ptr<ImageCache> &cache, bool changed) {
         upconverted_ = false;
         requestAdjust();
     }
-    if (!prev_ || !(prev_.value() == element) || position_changed_ || changed || !upconverted_ || !cache_) {
-        cache_ = element.getSurface(cache);
+    if (!prev_ || !(prev_.value() == element) || position_changed_ || changed || !current_surface_) {
+        prev_ = element;
+        current_surface_ = element.getSurface(cache);
     }
     position_changed_ = false;
-    prev_ = element;
     bool upconverted = true;
     for (auto &[_, v] : windows_) {
         if (util::isWayland()) {
-            upconverted = upconverted && v->draw(cache, {rect_.x, rect_.y}, cache_, element, use_self_alpha);
+            v->draw(cache, {rect_.x, rect_.y}, current_surface_, element, use_self_alpha);
         }
         else {
-            upconverted = upconverted && v->draw(cache, {0, 0}, cache_, element, use_self_alpha);
+            v->draw(cache, {0, 0}, current_surface_, element, use_self_alpha);
         }
     }
-    upconverted_ = upconverted;
+    return true;
+}
+
+void Character::swapBuffers() {
     for (auto &[_, v] : windows_) {
         v->swapBuffers();
     }
-    return true;
 }
 
 void Character::show(bool force) {

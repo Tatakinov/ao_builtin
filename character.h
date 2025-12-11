@@ -36,13 +36,14 @@ class Character {
         std::optional<ElementWithChildren> prev_;
         bool position_changed_;
         bool upconverted_;
-        std::unique_ptr<WrapSurface> cache_;
+        std::unique_ptr<WrapSurface> current_surface_;
     public:
         Character(Ayu *parent, int side, const std::string &name, std::unique_ptr<Seriko> seriko);
         ~Character();
         void create(SDL_DisplayID display_id);
         void destroy(SDL_DisplayID display_id);
         bool draw(std::unique_ptr<ImageCache> &cache, bool changed);
+        void swapBuffers();
         int side() const {
             return side_;
         }

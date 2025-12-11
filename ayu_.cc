@@ -496,6 +496,11 @@ void Ayu::draw() {
     }
     if (menu_) {
         menu_->draw();
+    }
+    for (auto k : keys) {
+        characters_.at(k)->swapBuffers();
+    }
+    if (menu_) {
         menu_->swapBuffers();
     }
 }
