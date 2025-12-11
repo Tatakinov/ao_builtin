@@ -130,44 +130,54 @@ void Window::position(int x, int y) {
 }
 
 bool Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool use_self_alpha) {
-    auto texture = element.getTexture(renderer_, texture_cache_, image_cache);
+    auto m = getMonitorRect();
     SDL_SetRenderTarget(renderer_, nullptr);
     SDL_SetRenderDrawColor(renderer_, 0x00, 0x00, 0x00, 0x00);
     SDL_RenderClear(renderer_);
-    auto m = getMonitorRect();
-    if (texture) {
+    if (current_element_ == element && offset_ == offset) {
+        if (current_texture_) {
+            SDL_SetRenderTarget(renderer_, nullptr);
+            SDL_BlendMode mode = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD);
+            SDL_SetTextureBlendMode(current_texture_->texture(), mode);
+            SDL_FRect r = { offset.x - m.x, offset.y - m.y, current_texture_->width(), current_texture_->height() };
+            SDL_RenderTexture(renderer_, current_texture_->texture(), nullptr, &r);
+        }
+        return true;
+    }
+    current_texture_ = element.getTexture(renderer_, texture_cache_, image_cache);
+    if (current_texture_) {
         while (adjust_) {
             int side = parent_->side();
             int origin_x = m.x + m.width;
             if (side > 0) {
                 auto o = parent_->getCharacterOffset(side - 1);
                 if (!o) {
-                    return false;
+                    break;
                 }
                 if (o->x < origin_x) {
                     origin_x = o->x;
                 }
             }
-            origin_x -= texture->width();
+            origin_x -= current_texture_->width();
             if (origin_x < m.x) {
                 origin_x = m.x;
             }
             int origin_y = m.y + m.height;
-            origin_y -= texture->height();
+            origin_y -= current_texture_->height();
             parent_->setOffset(origin_x, origin_y);
             offset = {origin_x, origin_y};
 
             adjust_ = false;
         }
         if (!util::isWayland()) {
-            SDL_SetWindowSize(window_, texture->width(), texture->height());
+            SDL_SetWindowSize(window_, current_texture_->width(), current_texture_->height());
         }
-        parent_->setSize(texture->width(), texture->height());
-
+        parent_->setSize(current_texture_->width(), current_texture_->height());
+        SDL_SetRenderTarget(renderer_, nullptr);
         SDL_BlendMode mode = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD);
-        SDL_SetTextureBlendMode(texture->texture(), mode);
-        SDL_FRect r = { offset.x - m.x, offset.y - m.y, texture->width(), texture->height() };
-        SDL_RenderTexture(renderer_, texture->texture(), nullptr, &r);
+        SDL_SetTextureBlendMode(current_texture_->texture(), mode);
+        SDL_FRect r = { offset.x - m.x, offset.y - m.y, current_texture_->width(), current_texture_->height() };
+        SDL_RenderTexture(renderer_, current_texture_->texture(), nullptr, &r);
     }
     if (surface) {
         std::vector<int> shape;
@@ -181,80 +191,24 @@ bool Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
             }
             SDL_UnlockSurface(surface->surface());
         }
-        //if (!parent_->isInDragging() && (!shape_ || shape_ != shape || !(offset_ == offset))) {
-        if ((!shape_ || shape_ != shape || !(offset_ == offset))) {
+        if (!shape_ || shape_ != shape || offset_ != offset) {
             auto s = std::make_unique<WrapSurface>(m.width, m.height);
             SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
-            Logger::log("surface.rect: ", surface->width(), ",", surface->height());
             SDL_Rect r = { offset.x - m.x, offset.y - m.y, surface->width(), surface->height() };
             SDL_BlitSurface(surface->surface(), nullptr, s->surface(), &r);
-            offset_ = offset;
             SDL_SetWindowShape(window_, s->surface());
             shape_ = shape;
         }
     }
-    else {
-        if (!shape_ || shape_->size() > 0) {
-            shape_ = std::make_optional<std::vector<int>>();
-            auto s = std::make_unique<WrapSurface>(m.width, m.height);
-            SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
-            SDL_SetWindowShape(window_, s->surface());
-        }
+    else if (!shape_ || shape_->size() > 0) {
+        shape_ = std::make_optional<std::vector<int>>();
+        auto s = std::make_unique<WrapSurface>(m.width, m.height);
+        SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
+        SDL_SetWindowShape(window_, s->surface());
     }
-#if 0
-    bool regenerate = false;
-    std::unique_ptr<Texture> &texture = cache_->get(image_cache, list, program_, use_self_alpha);
-    if (*texture) {
-        auto [x, y, w, h] = texture->rect();
-        auto r = getMonitorRect();
-        while (adjust_) {
-            int side = parent_->side();
-            int origin_x = r.x + r.width;
-            if (side > 0) {
-                auto o = parent_->getCharacterOffset(side - 1);
-                if (!o) {
-                    return false;
-                }
-                if (o->x < origin_x) {
-                    origin_x = o->x;
-                }
-            }
-            origin_x -= x + w;
-            if (origin_x < r.x) {
-                origin_x = r.x;
-            }
-            int origin_y = r.y + r.height;
-            origin_y -= y + h;
-            parent_->setOffset(origin_x, origin_y);
-            offset = {origin_x, origin_y};
-
-            adjust_ = false;
-        }
-        if (!util::isWayland()) {
-            SDL_SetWindowSize(window_, x + w, y + h);
-        }
-        parent_->setSize(x + w, y + h);
-    }
-    else {
-        parent_->setSize(0, 0);
-    }
-    if (*texture) {
-        if (!parent_->isInDragging() && (!region_ || !(region_.value() == texture->region()) || !(offset_ == offset))) {
-            offset_ = offset;
-            region_ = texture->region();
-            SDL_SetWindowShape();
-        }
-    }
-    else {
-        if (!region_ || region_.value().size() > 0) {
-            region_ = std::make_optional<std::vector<Rect>>();
-            SDL_SetWindowShape();
-        }
-    }
-    return texture->isUpconverted();
-#else
+    current_element_ = element;
+    offset_ = offset;
     return true;
-#endif
 }
 
 void Window::swapBuffers() {
@@ -298,6 +252,7 @@ double Window::distance(int x, int y) const {
 }
 
 void Window::clearCache() {
+    texture_cache_->clear();
 }
 
 void Window::key(const SDL_KeyboardEvent &event) {

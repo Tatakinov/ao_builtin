@@ -68,6 +68,9 @@ class TextureCache {
         TextureCache();
         ~TextureCache();
         std::unique_ptr<WrapTexture> &get(const std::filesystem::path &path, SDL_Renderer *renderer, std::unique_ptr<ImageCache> &cache);
+        void clear() {
+            cache_.clear();
+        }
 };
 
 #endif // TEXTURE_H_

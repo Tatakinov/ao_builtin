@@ -44,6 +44,8 @@ class Window {
         std::optional<std::vector<int>> shape_;
         SDL_Renderer *renderer_;
         std::unique_ptr<TextureCache> texture_cache_;
+        ElementWithChildren current_element_;
+        std::unique_ptr<WrapTexture> current_texture_;
 
     public:
         Window(Character *parent, SDL_DisplayID id);
