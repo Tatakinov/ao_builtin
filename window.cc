@@ -100,6 +100,7 @@ Window::Window(Character *parent, SDL_DisplayID id)
         window_ = SDL_CreateWindow(parent_->name().c_str(), 200, 200, SDL_WINDOW_TRANSPARENT | SDL_WINDOW_BORDERLESS | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
     }
     renderer_ = SDL_CreateRenderer(window_, nullptr);
+    SDL_SetRenderVSync(renderer_, 1);
     texture_cache_ = std::make_unique<TextureCache>();
 }
 
