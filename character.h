@@ -7,19 +7,19 @@
 
 #include <SDL3/SDL_video.h>
 
-#include "ayu_.h"
+#include "ao.h"
 #include "element.h"
 #include "image_cache.h"
 #include "misc.h"
 #include "seriko.h"
 #include "window.h"
 
-class Ayu;
+class Ao;
 class Window;
 
 class Character {
     private:
-        Ayu *parent_;
+        Ao *parent_;
         int side_;
         std::string name_;
         std::unique_ptr<Seriko> seriko_;
@@ -38,7 +38,7 @@ class Character {
         bool upconverted_;
         std::unique_ptr<WrapSurface> current_surface_;
     public:
-        Character(Ayu *parent, int side, const std::string &name, std::unique_ptr<Seriko> seriko);
+        Character(Ao *parent, int side, const std::string &name, std::unique_ptr<Seriko> seriko);
         ~Character();
         void create(SDL_DisplayID display_id);
         void destroy(SDL_DisplayID display_id);

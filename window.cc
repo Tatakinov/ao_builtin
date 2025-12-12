@@ -14,55 +14,53 @@
 #define MOUSE_BUTTON_MIDDLE 2
 #define MOUSE_BUTTON_RIGHT 3
 
-#define KEY2S(key) { SDLK_ ## key, #key }
 namespace {
     std::unordered_map<SDL_Keycode, int> key_count;
     std::unordered_map<SDL_Keycode, std::string> key2s = {
-        KEY2S(0),
-        KEY2S(1),
-        KEY2S(2),
-        KEY2S(3),
-        KEY2S(4),
-        KEY2S(5),
-        KEY2S(6),
-        KEY2S(7),
-        KEY2S(8),
-        KEY2S(9),
-        KEY2S(A),
-        KEY2S(B),
-        KEY2S(C),
-        KEY2S(D),
-        KEY2S(E),
-        KEY2S(F),
-        KEY2S(G),
-        KEY2S(H),
-        KEY2S(I),
-        KEY2S(J),
-        KEY2S(K),
-        KEY2S(L),
-        KEY2S(M),
-        KEY2S(N),
-        KEY2S(O),
-        KEY2S(P),
-        KEY2S(Q),
-        KEY2S(R),
-        KEY2S(S),
-        KEY2S(T),
-        KEY2S(U),
-        KEY2S(V),
-        KEY2S(W),
-        KEY2S(X),
-        KEY2S(Y),
-        KEY2S(Z),
+        { SDLK_0, "0" },
+        { SDLK_1, "1" },
+        { SDLK_2, "2" },
+        { SDLK_3, "3" },
+        { SDLK_4, "4" },
+        { SDLK_5, "5" },
+        { SDLK_6, "6" },
+        { SDLK_7, "7" },
+        { SDLK_8, "8" },
+        { SDLK_9, "9" },
+        { SDLK_A, "a" },
+        { SDLK_B, "b" },
+        { SDLK_C, "c" },
+        { SDLK_D, "d" },
+        { SDLK_E, "e" },
+        { SDLK_F, "f" },
+        { SDLK_G, "g" },
+        { SDLK_H, "h" },
+        { SDLK_I, "i" },
+        { SDLK_J, "j" },
+        { SDLK_K, "k" },
+        { SDLK_L, "l" },
+        { SDLK_M, "m" },
+        { SDLK_N, "n" },
+        { SDLK_O, "o" },
+        { SDLK_P, "p" },
+        { SDLK_Q, "q" },
+        { SDLK_R, "r" },
+        { SDLK_S, "s" },
+        { SDLK_T, "t" },
+        { SDLK_U, "u" },
+        { SDLK_V, "v" },
+        { SDLK_W, "w" },
+        { SDLK_X, "x" },
+        { SDLK_Y, "y" },
+        { SDLK_Z, "z" },
     };
 }
-#undef KEY2S
 
 Window::Window(Character *parent, SDL_DisplayID id)
     : window_(nullptr), size_({0, 0}),
     position_({0, 0}), parent_(parent),
     adjust_(false),
-    counter_(0), offset_({0, 0}), renderer_(nullptr) {
+    counter_(0), offset_({0, 0}), renderer_(nullptr), redrawn_(false) {
     if (util::isWayland()) {
         SDL_Rect r;
         SDL_GetDisplayBounds(id, &r);
@@ -136,14 +134,8 @@ bool Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
     SDL_SetRenderDrawColor(renderer_, 0x00, 0x00, 0x00, 0x00);
     SDL_RenderClear(renderer_);
     if (current_element_ == element && offset_ == offset) {
-        if (current_texture_) {
-            SDL_SetRenderTarget(renderer_, nullptr);
-            SDL_BlendMode mode = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD);
-            SDL_SetTextureBlendMode(current_texture_->texture(), mode);
-            SDL_FRect r = { offset.x - m.x, offset.y - m.y, current_texture_->width(), current_texture_->height() };
-            SDL_RenderTexture(renderer_, current_texture_->texture(), nullptr, &r);
-        }
-        return true;
+        redrawn_ = false;
+        return redrawn_;
     }
     current_texture_ = element.getTexture(renderer_, texture_cache_, image_cache);
     if (current_texture_) {
@@ -209,12 +201,15 @@ bool Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
     }
     current_element_ = element;
     offset_ = offset;
-    return true;
+    redrawn_ = true;
+    return redrawn_;
 }
 
 void Window::swapBuffers() {
-    SDL_SetRenderTarget(renderer_, nullptr);
-    SDL_RenderPresent(renderer_);
+    if (redrawn_) {
+        SDL_SetRenderTarget(renderer_, nullptr);
+        SDL_RenderPresent(renderer_);
+    }
 }
 
 double Window::distance(int x, int y) const {

@@ -1,5 +1,5 @@
-#ifndef GL_AYU_H_
-#define GL_AYU_H_
+#ifndef AO_H_
+#define AO_H_
 
 #include <condition_variable>
 #include <cstdlib>
@@ -26,7 +26,7 @@
 class Character;
 class Surfaces;
 
-class Ayu {
+class Ao {
     private:
         std::mutex mutex_;
         std::condition_variable cond_;
@@ -34,7 +34,7 @@ class Ayu {
         std::queue<std::vector<Request>> event_queue_;
         std::unique_ptr<std::thread> th_recv_;
         std::unique_ptr<std::thread> th_send_;
-        std::filesystem::path ayu_dir_;
+        std::filesystem::path ao_dir_;
         std::unordered_map<std::string, std::string> info_;
         std::unordered_map<int, std::unordered_map<std::string, int>> bind_id_;
         std::unordered_map<int, std::unique_ptr<Character>> characters_;
@@ -49,14 +49,14 @@ class Ayu {
         std::unique_ptr<Menu> menu_;
 
     public:
-        Ayu() : alive_(true), scale_(100), loaded_(false), redrawn_(false) {
+        Ao() : alive_(true), scale_(100), loaded_(false), redrawn_(false) {
             init();
 #if defined(DEBUG)
-            ayu_dir_ = "./shell/master";
-            surfaces_ = std::make_unique<Surfaces>(ayu_dir_);
+            ao_dir_ = "./shell/master";
+            surfaces_ = std::make_unique<Surfaces>(ao_dir_);
 #endif // DEBUG
         }
-        ~Ayu();
+        ~Ao();
 
         bool init();
 

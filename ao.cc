@@ -1,4 +1,4 @@
-#include "ayu_.h"
+#include "ao.h"
 
 #include <cstdint>
 #include <filesystem>
@@ -24,7 +24,7 @@
 #include <unistd.h>
 #endif // WIN32
 
-#include "ayu.h"
+#include "sorakado.h"
 #include "logger.h"
 #include "misc.h"
 #include "sstp.h"
@@ -39,7 +39,7 @@ namespace {
 #endif
 }
 
-Ayu::~Ayu() {
+Ao::~Ao() {
     {
         std::unique_lock<std::mutex> lock(mutex_);
         alive_ = false;
@@ -52,7 +52,7 @@ Ayu::~Ayu() {
 #endif // Windows
 }
 
-bool Ayu::init() {
+bool Ao::init() {
 #ifdef IS_WINDOWS
     WSADATA wsa;
     WSAStartup(MAKEWORD(2, 2), &wsa);
@@ -74,11 +74,11 @@ bool Ayu::init() {
             if (std::cin.gcount() < len) {
                 break;
             }
-            auto req = ayu::Request::parse(request);
+            auto req = sorakado::Request::parse(request);
             Logger::log(request);
             auto event = req().value();
 
-            ayu::Response res {204, "No Content"};
+            sorakado::Response res {204, "No Content"};
 
             if (event == "Initialize" && req(0)) {
                 std::string tmp;
@@ -87,7 +87,7 @@ bool Ayu::init() {
                     tmp = req(0).value();
                 }
                 std::u8string dir(tmp.begin(), tmp.end());
-                ayu_dir_ = dir;
+                ao_dir_ = dir;
             }
             else if (event == "Endpoint" && req(0) && req(1)) {
                 {
@@ -96,7 +96,7 @@ bool Ayu::init() {
                     uuid_ = req(1).value();
                 }
             }
-            else if (event == "UpdateInfo" && req(0)) {
+            else if (event == "Description" && req(0)) {
                 {
                     std::unique_lock<std::mutex> lock(mutex_);
                     int n;
@@ -303,19 +303,19 @@ bool Ayu::init() {
     });
 
 #if !defined(DEBUG)
-    surfaces_ = std::make_unique<Surfaces>(ayu_dir_);
+    surfaces_ = std::make_unique<Surfaces>(ao_dir_);
     surfaces_->dump();
 #endif // DEBUG
 
     return true;
 }
 
-std::string Ayu::getInfo(std::string key, bool fallback) {
+std::string Ao::getInfo(std::string key, bool fallback) {
     if (info_.contains(key)) {
         return info_.at(key);
     }
     if (fallback) {
-        auto res = sstp::Response::parse(Ayu::sendDirectSSTP("EXECUTE", "GetSurfaceInfo", {key}));
+        auto res = sstp::Response::parse(Ao::sendDirectSSTP("EXECUTE", "GetSurfaceInfo", {key}));
         std::string content = res.getContent();
         if (content.empty()) {
             Logger::log("info(", key, "): not found");
@@ -327,7 +327,7 @@ std::string Ayu::getInfo(std::string key, bool fallback) {
 }
 
 
-void Ayu::create(int side) {
+void Ao::create(int side) {
     if (characters_.contains(side)) {
         return;
     }
@@ -349,58 +349,58 @@ void Ayu::create(int side) {
     return;
 }
 
-void Ayu::show(int side) {
+void Ao::show(int side) {
     if (!characters_.contains(side)) {
         return;
     }
     characters_.at(side)->show();
 }
 
-void Ayu::hide(int side) {
+void Ao::hide(int side) {
     if (!characters_.contains(side)) {
         return;
     }
     characters_.at(side)->hide();
 }
 
-void Ayu::setSurface(int side, int id) {
+void Ao::setSurface(int side, int id) {
     if (!characters_.contains(side)) {
         return;
     }
     characters_.at(side)->setSurface(id);
 }
 
-void Ayu::startAnimation(int side, int id) {
+void Ao::startAnimation(int side, int id) {
     if (!characters_.contains(side)) {
         return;
     }
     characters_.at(side)->startAnimation(id);
 }
 
-bool Ayu::isPlayingAnimation(int side, int id) {
+bool Ao::isPlayingAnimation(int side, int id) {
     if (!characters_.contains(side)) {
         return false;
     }
     return characters_.at(side)->isPlayingAnimation(id);
 }
 
-void Ayu::bind(int side, int id, std::string from, BindFlag flag) {
+void Ao::bind(int side, int id, std::string from, BindFlag flag) {
     if (!characters_.contains(side)) {
         return;
     }
     characters_.at(side)->bind(id, from, flag);
 }
 
-void Ayu::clearCache() {
+void Ao::clearCache() {
     cache_->clearCache();
     for (auto &[_, v] : characters_) {
         v->clearCache();
     }
 }
 
-void Ayu::draw() {
+void Ao::draw() {
     SDL_Event event;
-    while (SDL_PollEvent(&event)) {
+    while ((redrawn_) ? (SDL_PollEvent(&event)) : (SDL_WaitEventTimeout(&event, 10))) {
         switch (event.type) {
             case SDL_EVENT_QUIT:
                 alive_ = false;
@@ -505,20 +505,20 @@ void Ayu::draw() {
     }
 }
 
-Rect Ayu::getRect(int side) {
+Rect Ao::getRect(int side) {
     if (!characters_.contains(side)) {
         return {0, 0, 0, 0};
     }
     return characters_.at(side)->getRect();
 }
 
-void Ayu::resetBalloonPosition() {
+void Ao::resetBalloonPosition() {
     for (auto &[k, v] : characters_) {
         v->resetBalloonPosition();
     }
 }
 
-std::optional<Offset> Ayu::getCharacterOffset(int side) {
+std::optional<Offset> Ao::getCharacterOffset(int side) {
     int s = side;
     std::optional<Offset> ret = std::nullopt;
     for (; s >= 0; s--) {
@@ -535,25 +535,25 @@ std::optional<Offset> Ayu::getCharacterOffset(int side) {
     return ret;
 }
 
-void Ayu::setBalloonOffset(int side, int x, int y) {
+void Ao::setBalloonOffset(int side, int x, int y) {
     if (!characters_.contains(side)) {
         return;
     }
     return characters_.at(side)->setBalloonOffset(x, y);
 }
 
-Offset Ayu::getBalloonOffset(int side) {
+Offset Ao::getBalloonOffset(int side) {
     if (!characters_.contains(side)) {
         return {0, 0};
     }
     return characters_.at(side)->getBalloonOffset();
 }
 
-std::string Ayu::sendDirectSSTP(std::string method, std::string command, std::vector<std::string> args) {
+std::string Ao::sendDirectSSTP(std::string method, std::string command, std::vector<std::string> args) {
     sstp::Request req {method};
     sstp::Response res {500, "Internal Server Error"};
     req["Charset"] = "UTF-8";
-    req["Ayu"] = uuid_;
+    req["Ao"] = uuid_;
     if (path_.empty()) {
         return res;
     }
@@ -605,7 +605,7 @@ std::string Ayu::sendDirectSSTP(std::string method, std::string command, std::ve
     return data;
 }
 
-void Ayu::enqueueDirectSSTP(std::vector<Request> list) {
+void Ao::enqueueDirectSSTP(std::vector<Request> list) {
     {
         std::unique_lock<std::mutex> lock(mutex_);
         event_queue_.push(list);
@@ -613,6 +613,6 @@ void Ayu::enqueueDirectSSTP(std::vector<Request> list) {
     cond_.notify_one();
 }
 
-void Ayu::reserveMenuParent(SDL_Window *window) {
+void Ao::reserveMenuParent(SDL_Window *window) {
     menu_ = std::make_unique<Menu>(window);
 }

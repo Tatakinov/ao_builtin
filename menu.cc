@@ -1,7 +1,7 @@
 #include "menu.h"
 
 Menu::Menu(SDL_Window* parent) {
-    window_ = SDL_CreatePopupWindow(parent, 0, 0, 200, 200, SDL_WINDOW_POPUP_MENU);
+    window_ = SDL_CreatePopupWindow(parent, 0, 0, 200, 200, SDL_WINDOW_POPUP_MENU | SDL_WINDOW_ALWAYS_ON_TOP);
     renderer_ = SDL_CreateRenderer(window_, nullptr);
 }
 

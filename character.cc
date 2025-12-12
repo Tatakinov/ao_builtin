@@ -5,7 +5,7 @@
 #include "sstp.h"
 #include "util.h"
 
-Character::Character(Ayu *parent, int side, const std::string &name, std::unique_ptr<Seriko> seriko)
+Character::Character(Ao *parent, int side, const std::string &name, std::unique_ptr<Seriko> seriko)
     : parent_(parent), side_(side), name_(name),
     seriko_(std::move(seriko)),
     rect_({0, 0, 0, 0}), balloon_offset_({0, 0}),
@@ -50,21 +50,22 @@ bool Character::draw(std::unique_ptr<ImageCache> &cache, bool changed) {
         upconverted_ = false;
         requestAdjust();
     }
-    if (!prev_ || !(prev_.value() == element) || position_changed_ || changed || !current_surface_) {
+    if (!prev_ || !(prev_ == element) || position_changed_ || changed || !current_surface_) {
         prev_ = element;
         current_surface_ = element.getSurface(cache);
     }
     position_changed_ = false;
     bool upconverted = true;
+    bool redrawn = false;
     for (auto &[_, v] : windows_) {
         if (util::isWayland()) {
-            v->draw(cache, {rect_.x, rect_.y}, current_surface_, element, use_self_alpha);
+            redrawn = v->draw(cache, {rect_.x, rect_.y}, current_surface_, element, use_self_alpha) || redrawn;
         }
         else {
-            v->draw(cache, {0, 0}, current_surface_, element, use_self_alpha);
+            redrawn = v->draw(cache, {0, 0}, current_surface_, element, use_self_alpha) || redrawn;
         }
     }
-    return true;
+    return redrawn;
 }
 
 void Character::swapBuffers() {

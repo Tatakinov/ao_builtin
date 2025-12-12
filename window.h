@@ -12,7 +12,6 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_video.h>
 
-#include "ayu_.h"
 #include "element.h"
 #include "image_cache.h"
 #include "logger.h"
@@ -46,6 +45,7 @@ class Window {
         std::unique_ptr<TextureCache> texture_cache_;
         ElementWithChildren current_element_;
         std::unique_ptr<WrapTexture> current_texture_;
+        bool redrawn_;
 
     public:
         Window(Character *parent, SDL_DisplayID id);
