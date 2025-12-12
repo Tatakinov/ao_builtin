@@ -5,7 +5,7 @@
 
 std::unique_ptr<WrapTexture> Element::getTexture(SDL_Renderer *renderer, std::unique_ptr<TextureCache> &texture_cache, std::unique_ptr<ImageCache> &image_cache) const {
     auto &src = texture_cache->get(filename, renderer, image_cache);
-    auto dst = std::make_unique<WrapTexture>(renderer, x + src->width(), y + src->height());
+    auto dst = std::make_unique<WrapTexture>(renderer, x + src->width(), y + src->height(), src->isUpconverted());
     SDL_BlendMode mode = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD);
     switch (method) {
         case Method::Base:

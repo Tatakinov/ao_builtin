@@ -41,8 +41,8 @@ class WrapTexture {
         SDL_Texture *texture_;
         bool is_upconverted_;
     public:
-        WrapTexture(SDL_Renderer *renderer, int w, int h);
-        WrapTexture(SDL_Renderer *renderer, SDL_Surface *surface, bool is_upconverted = false);
+        WrapTexture(SDL_Renderer *renderer, int w, int h, bool is_upconverted);
+        WrapTexture(SDL_Renderer *renderer, SDL_Surface *surface, bool is_upconverted);
         ~WrapTexture();
         SDL_Texture *texture() {
             return texture_;

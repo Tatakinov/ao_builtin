@@ -23,7 +23,7 @@ WrapSurface::~WrapSurface() {
 }
 
 
-WrapTexture::WrapTexture(SDL_Renderer *renderer, int w, int h) : is_upconverted_(false) {
+WrapTexture::WrapTexture(SDL_Renderer *renderer, int w, int h, bool is_upconverted) : is_upconverted_(is_upconverted) {
     texture_ = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_TARGET, w, h);
 }
 

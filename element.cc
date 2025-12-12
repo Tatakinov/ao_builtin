@@ -10,6 +10,7 @@ namespace {
 
 std::unique_ptr<WrapTexture> ElementWithChildren::getTexture(SDL_Renderer *renderer, std::unique_ptr<TextureCache> &texture_cache, std::unique_ptr<ImageCache> &image_cache) const {
     int w = 0, h = 0;
+    bool upconverted = true;
     std::vector<std::optional<std::unique_ptr<WrapTexture>>> list;
     for (auto &element : children) {
         std::visit([&](const auto &e) {
@@ -18,6 +19,7 @@ std::unique_ptr<WrapTexture> ElementWithChildren::getTexture(SDL_Renderer *rende
                 list.push_back(std::nullopt);
                 return;
             }
+            upconverted = upconverted && t->isUpconverted();
             if (w < t->width()) {
                 w = t->width();
             }
@@ -32,7 +34,7 @@ std::unique_ptr<WrapTexture> ElementWithChildren::getTexture(SDL_Renderer *rende
         Logger::log("no valid children");
         return invalid;
     }
-    auto texture = std::make_unique<WrapTexture>(renderer, w, h);
+    auto texture = std::make_unique<WrapTexture>(renderer, w, h, upconverted);
     SDL_SetRenderTarget(renderer, texture->texture());
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
     SDL_RenderClear(renderer);
