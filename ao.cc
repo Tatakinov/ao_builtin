@@ -478,10 +478,9 @@ void Ao::draw() {
             setSurface(side, id);
         }
         else if (args[0] == "Scale") {
-            int scale;
-            util::to_x(args[1], scale);
+            util::to_x(args[1], scale_);
             clearCache();
-            cache_->setScale(scale);
+            cache_->setScale(scale_);
             changed = true;
         }
     }

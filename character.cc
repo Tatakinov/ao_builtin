@@ -52,7 +52,7 @@ bool Character::draw(std::unique_ptr<ImageCache> &cache, bool changed) {
     }
     if (!prev_ || !(prev_ == element) || position_changed_ || changed || !current_surface_) {
         prev_ = element;
-        current_surface_ = element.getSurface(cache);
+        current_surface_ = element.getSurface(cache, scale());
     }
     position_changed_ = false;
     bool upconverted = true;
@@ -526,4 +526,8 @@ void Character::wheel(const SDL_MouseWheelEvent &event) {
 
 void Character::reserveMenuParent(SDL_Window *window) {
     parent_->reserveMenuParent(window);
+}
+
+int Character::scale() const {
+    return parent_->scale();
 }

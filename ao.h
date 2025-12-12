@@ -100,6 +100,10 @@ class Ao {
         void enqueueDirectSSTP(std::vector<Request> list);
 
         void reserveMenuParent(SDL_Window *window);
+
+        int scale() const {
+            return scale_;
+        }
 };
 
 #endif // GL_AYU_H_

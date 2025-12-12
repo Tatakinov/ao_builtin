@@ -129,15 +129,15 @@ void Window::position(int x, int y) {
 }
 
 bool Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool use_self_alpha) {
-    auto m = getMonitorRect();
-    SDL_SetRenderTarget(renderer_, nullptr);
-    SDL_SetRenderDrawColor(renderer_, 0x00, 0x00, 0x00, 0x00);
-    SDL_RenderClear(renderer_);
     if (current_element_ == element && offset_ == offset && current_texture_ && current_texture_->isUpconverted()) {
         redrawn_ = false;
         return redrawn_;
     }
-    current_texture_ = element.getTexture(renderer_, texture_cache_, image_cache);
+    auto m = getMonitorRect();
+    SDL_SetRenderTarget(renderer_, nullptr);
+    SDL_SetRenderDrawColor(renderer_, 0x00, 0x00, 0x00, 0x00);
+    SDL_RenderClear(renderer_);
+    current_texture_ = element.getTexture(renderer_, texture_cache_, image_cache, scale());
     if (current_texture_) {
         while (adjust_) {
             int side = parent_->side();
@@ -415,4 +415,8 @@ void Window::wheel(const SDL_MouseWheelEvent &event) {
         return;
     }
     // TODO stub
+}
+
+int Window::scale() const {
+    return parent_->scale();
 }

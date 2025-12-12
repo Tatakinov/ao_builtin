@@ -8,23 +8,23 @@ namespace {
     const int kInf = 1000000;
 }
 
-std::unique_ptr<WrapTexture> ElementWithChildren::getTexture(SDL_Renderer *renderer, std::unique_ptr<TextureCache> &texture_cache, std::unique_ptr<ImageCache> &image_cache) const {
+std::unique_ptr<WrapTexture> ElementWithChildren::getTexture(SDL_Renderer *renderer, std::unique_ptr<TextureCache> &texture_cache, std::unique_ptr<ImageCache> &image_cache, int scale) const {
     int w = 0, h = 0;
     bool upconverted = true;
     std::vector<std::optional<std::unique_ptr<WrapTexture>>> list;
     for (auto &element : children) {
         std::visit([&](const auto &e) {
-            auto t = e.getTexture(renderer, texture_cache, image_cache);
+            auto t = e.getTexture(renderer, texture_cache, image_cache, scale);
             if (!t) {
                 list.push_back(std::nullopt);
                 return;
             }
             upconverted = upconverted && t->isUpconverted();
-            if (w < t->width()) {
-                w = t->width();
+            if (w < (e.x * scale) / 100 + t->width()) {
+                w = (e.x * scale) / 100 + t->width();
             }
-            if (h < t->height()) {
-                h = t->height();
+            if (h < (e.y * scale) / 100 + t->height()) {
+                h = (e.y * scale) / 100 + t->height();
             }
             list.push_back(std::move(t));
         }, element);
@@ -69,30 +69,31 @@ std::unique_ptr<WrapTexture> ElementWithChildren::getTexture(SDL_Renderer *rende
                 default:
                     break;
             }
+            auto &t = list[i].value();
+            SDL_SetTextureBlendMode(t->texture(), mode);
+            SDL_FRect r = { (e.x * scale / 100), (e.y * scale / 100), t->width(), t->height() };
+            SDL_RenderTexture(renderer, t->texture(), nullptr, &r);
         }, children[i]);
-        auto &t = list[i].value();
-        SDL_SetTextureBlendMode(t->texture(), mode);
-        SDL_FRect r = { x, y, t->width(), t->height() };
-        SDL_RenderTexture(renderer, t->texture(), nullptr, &r);
     }
+    SDL_SetRenderTarget(renderer, nullptr);
     return texture;
 }
 
-std::unique_ptr<WrapSurface> ElementWithChildren::getSurface(std::unique_ptr<ImageCache> &cache) const {
+std::unique_ptr<WrapSurface> ElementWithChildren::getSurface(std::unique_ptr<ImageCache> &cache, int scale) const {
     int w = 0, h = 0;
-    std::vector<std::unique_ptr<WrapSurface>> list;
+    std::vector<std::optional<std::unique_ptr<WrapSurface>>> list;
     for (auto &element : children) {
         std::visit([&](const auto &e) {
-            auto t = e.getSurface(cache);
+            auto t = e.getSurface(cache, scale);
             if (!t) {
-                Logger::log("invalid surface");
+                list.push_back(std::nullopt);
                 return;
             }
-            if (w < t->width()) {
-                w = t->width();
+            if (w < (e.x * scale) / 100 + t->width()) {
+                w = (e.x * scale) / 100 + t->width();
             }
-            if (h < t->height()) {
-                h = t->height();
+            if (h < (e.y * scale) / 100 + t->height()) {
+                h = (e.y * scale) / 100 + t->height();
             }
             list.push_back(std::move(t));
         }, element);
@@ -103,10 +104,17 @@ std::unique_ptr<WrapSurface> ElementWithChildren::getSurface(std::unique_ptr<Ima
         return invalid;
     }
     auto surface = std::make_unique<WrapSurface>(w, h);
-    for (auto &t : list) {
-        SDL_SetSurfaceBlendMode(t->surface(), SDL_BLENDMODE_BLEND);
-        SDL_Rect r = { x, y, t->width(), t->height() };
-        SDL_BlitSurface(t->surface(), nullptr, surface->surface(), &r);
+    SDL_ClearSurface(surface->surface(), 0, 0, 0, 0);
+    for (int i = 0; i < list.size(); i++) {
+        if (!list[i]) {
+            continue;
+        }
+        std::visit([&](const auto &e) {
+            auto &t = list[i].value();
+            SDL_SetSurfaceBlendMode(t->surface(), SDL_BLENDMODE_BLEND);
+            SDL_Rect r = { (e.x * scale) / 100, (e.y * scale) / 100, t->width(), t->height() };
+            SDL_BlitSurface(t->surface(), nullptr, surface->surface(), &r);
+        }, children[i]);
     }
     return surface;
 }
