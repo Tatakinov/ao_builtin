@@ -96,12 +96,10 @@ bool Ao::init() {
                     uuid_ = req(1).value();
                 }
             }
-            else if (event == "Description" && req(0)) {
+            else if (event == "Description") {
                 {
                     std::unique_lock<std::mutex> lock(mutex_);
-                    int n;
-                    util::to_x(req(0).value(), n);
-                    for (int i = 1; i <= n; i++) {
+                    for (int i = 0; req(i); i++) {
                         auto &value = req(i).value();
                         auto pos = value.find(',');
                         if (pos == std::string::npos) {
@@ -477,11 +475,27 @@ void Ao::draw() {
             util::to_x(args[2], id);
             setSurface(side, id);
         }
-        else if (args[0] == "Scale") {
-            util::to_x(args[1], scale_);
-            clearCache();
-            cache_->setScale(scale_);
-            changed = true;
+        else if (args[0] == "ConfigurationChanged") {
+            for (int i = 1; i < args.size(); i++) {
+                auto value = args[i];
+                auto pos = value.find(',');
+                if (pos == std::string::npos) {
+                    continue;
+                }
+                auto key = value.substr(0, pos);
+                value = value.substr(pos + 1);
+                if (key == "scale") {
+                    int scale;
+                    util::to_x(value, scale);
+                    if (scale == scale_ || scale < 10) {
+                        continue;
+                    }
+                    scale_ = scale;
+                    clearCache();
+                    cache_->setScale(scale);
+                    changed = true;
+                }
+            }
         }
     }
     std::vector<int> keys;
