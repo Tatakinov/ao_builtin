@@ -254,6 +254,7 @@ bool Ao::init() {
         }
         {
             std::unique_lock<std::mutex> lock(mutex_);
+            loaded_ = true;
             alive_ = false;
             event_queue_.push({{"", "", {}}});
         }
