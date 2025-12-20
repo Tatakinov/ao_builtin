@@ -5,7 +5,7 @@
 
 std::unique_ptr<WrapTexture> Element::getTexture(SDL_Renderer *renderer, std::unique_ptr<TextureCache> &texture_cache, std::unique_ptr<ImageCache> &image_cache, int scale) const {
     auto &src = texture_cache->get(filename, renderer, image_cache);
-    auto dst = std::make_unique<WrapTexture>(renderer, (x * scale) / 100 + src->width(), (y * scale) / 100 + src->height(), src->isUpconverted());
+    auto dst = std::make_unique<WrapTexture>(renderer, src->width(), src->height(), src->isUpconverted());
     SDL_BlendMode mode = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD);
     switch (method) {
         case Method::Base:
@@ -36,7 +36,7 @@ std::unique_ptr<WrapTexture> Element::getTexture(SDL_Renderer *renderer, std::un
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
     SDL_RenderClear(renderer);
     SDL_SetTextureBlendMode(src->texture(), mode);
-    SDL_FRect r = { (x * scale) / 100, (y * scale) / 100, src->width(), src->height() };
+    SDL_FRect r = { 0, 0, src->width(), src->height() };
     SDL_RenderTexture(renderer, src->texture(), nullptr, &r);
     SDL_SetRenderTarget(renderer, nullptr);
     return dst;
