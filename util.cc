@@ -38,6 +38,6 @@ namespace util {
 
     bool isWayland() {
         std::string wayland = "wayland";
-        return (wayland == getenv("XDG_SESSION_TYPE"));
+        return (getenv("XDG_SESSION_TYPE") != nullptr && wayland == getenv("XDG_SESSION_TYPE"));
     }
 }
