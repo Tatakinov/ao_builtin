@@ -185,7 +185,9 @@ bool Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
             SDL_UnlockSurface(surface->surface());
         }
         if (!shape_ || shape_ != shape || offset_ != offset) {
-            auto s = std::make_unique<WrapSurface>(m.width, m.height);
+            int w, h;
+            SDL_GetWindowSize(window_, &w, &h);
+            auto s = std::make_unique<WrapSurface>(w, h);
             SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
             SDL_Rect r = { offset.x - m.x, offset.y - m.y, surface->width(), surface->height() };
             SDL_BlitSurface(surface->surface(), nullptr, s->surface(), &r);
@@ -195,7 +197,9 @@ bool Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
     }
     else if (!shape_ || shape_->size() > 0) {
         shape_ = std::make_optional<std::vector<int>>();
-        auto s = std::make_unique<WrapSurface>(m.width, m.height);
+        int w, h;
+        SDL_GetWindowSize(window_, &w, &h);
+        auto s = std::make_unique<WrapSurface>(w, h);
         SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
         SDL_SetWindowShape(window_, s->surface());
     }
@@ -419,4 +423,18 @@ void Window::wheel(const SDL_MouseWheelEvent &event) {
 
 int Window::scale() const {
     return parent_->scale();
+}
+
+
+Rect Window::getMonitorRect() const {
+    if (util::isWayland()) {
+        return monitor_rect_;
+    }
+    else {
+        auto cr = parent_->getRect();
+        auto id = util::getNearestDisplay(cr.x + cr.width / 2, cr.y + cr.height / 2);
+        SDL_Rect r;
+        SDL_GetDisplayBounds(id, &r);
+        return {r.x, r.y, r.w, r.h};
+    }
 }

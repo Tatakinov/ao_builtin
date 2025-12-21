@@ -80,7 +80,6 @@ class Character {
             return drag_.has_value();
         }
         void setOffset(int x, int y);
-        void resetBalloonPosition();
         Offset getOffset() {
             Offset offset;
             {

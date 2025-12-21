@@ -83,9 +83,7 @@ class Window {
             return p;
         }
 
-        Rect getMonitorRect() const {
-            return monitor_rect_;
-        }
+        Rect getMonitorRect() const;
 
         void requestAdjust() {
             adjust_ = true;

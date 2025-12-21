@@ -96,7 +96,7 @@ void Character::setSurface(int id) {
 
 void Character::requestAdjust() {
     SDL_DisplayID key = 0;
-    {
+    if (util::isWayland()) {
         double distance = -1;
         for (auto &[k, v] : windows_) {
             double d = v->distance(rect_.x, rect_.y);
@@ -138,75 +138,6 @@ void Character::clearCache() {
     for (auto &[_, v] : windows_) {
         v->clearCache();
     }
-}
-
-void Character::resetBalloonPosition() {
-    int ox = rect_.x, oy = rect_.y;
-    if (drag_) {
-        auto v = drag_.value();
-        ox += v.ox - v.x;
-        oy += v.oy - v.y;
-    }
-    SDL_DisplayID key = 0;
-    {
-        double distance = -1;
-        for (auto &[k, v] : windows_) {
-            double d = v->distance(ox, oy);
-            if (d < distance || distance == -1) {
-                distance = d;
-                key = k;
-            }
-        }
-    }
-    Rect monitor_rect = windows_[key]->getMonitorRect();
-    int x, y;
-    int w = 0, h = 0;
-    {
-        auto res = sstp::Response::parse(parent_->sendDirectSSTP("EXECUTE", "GetBalloonSize", {util::to_s(side_)}));
-        std::string content = res.getContent();
-        char delim;
-        if (!content.empty()) {
-            std::istringstream iss(content);
-            iss >> w;
-            iss >> delim;
-            iss >> h;
-        }
-    }
-    int rx = rect_.x + rect_.width - balloon_offset_.x;
-    int lx = rect_.x - w + balloon_offset_.x;
-    // 右
-    if (balloon_direction_) {
-        if (rx + w > monitor_rect.x + monitor_rect.width) {
-            if (lx >= monitor_rect.x) {
-                balloon_direction_ = !balloon_direction_;
-            }
-        }
-    }
-    // 左
-    else {
-        if (lx < monitor_rect.x) {
-            if (rx + w <= monitor_rect.x + monitor_rect.width) {
-                balloon_direction_ = !balloon_direction_;
-            }
-        }
-    }
-    if (balloon_direction_) {
-        if (rx + w > monitor_rect.x + monitor_rect.width) {
-            rx -= rx + w - monitor_rect.x - monitor_rect.width;
-        }
-        x = rx;
-    }
-    else {
-        if (lx < monitor_rect.x) {
-            lx -= lx - monitor_rect.x;
-        }
-        x = lx;
-    }
-    y = rect_.y + balloon_offset_.y;
-    Request req = {"EXECUTE", "SetBalloonPosition", {util::to_s(side_), util::to_s(x), util::to_s(y)}};
-    parent_->enqueueDirectSSTP({req});
-    req = {"EXECUTE", "SetBalloonDirection", {util::to_s(side_), util::to_s((balloon_direction_) ? (1) : (0))}};
-    parent_->enqueueDirectSSTP({req});
 }
 
 void Character::setSize(int w, int h) {
@@ -270,27 +201,28 @@ void Character::resetDrag() {
         align = f(value);
     }
 
-    SDL_DisplayID key = 0;
-    {
+    SDL_DisplayID id = 0;
+    if (util::isWayland()) {
         double distance = -1;
         for (auto &[k, v] : windows_) {
             double d = v->distance(rect_.x, rect_.y);
             if (d < distance || distance == -1) {
                 distance = d;
-                key = k;
+                id = k;
             }
         }
     }
-    if (!windows_.contains(key)) {
-        return;
+    else {
+        id = util::getNearestDisplay(rect_.x, rect_.y);
     }
-    Rect monitor_rect = windows_[key]->getMonitorRect();
+    SDL_Rect r;
+    SDL_GetDisplayBounds(id, &r);
     switch (align) {
         case Alignment::Bottom:
-            setOffset(rect_.x, monitor_rect.y + monitor_rect.height - rect_.height);
+            setOffset(rect_.x, r.y + r.h - rect_.height);
             break;
         case Alignment::Top:
-            setOffset(rect_.x, monitor_rect.y);
+            setOffset(rect_.x, r.y);
             break;
         case Alignment::Free:
             // nop
@@ -313,22 +245,13 @@ void Character::setOffset(int x, int y) {
             rect_.x = x;
             rect_.y = y;
         }
-        SDL_DisplayID key = 0;
-        {
-            double distance = -1;
-            for (auto &[k, v] : windows_) {
-                double d = v->distance(rect_.x, rect_.y);
-                if (d < distance || distance == -1) {
-                    distance = d;
-                    key = k;
-                }
-            }
-        }
-        if (!windows_.contains(key)) {
-            return;
-        }
-        Rect monitor_rect = windows_[key]->getMonitorRect();
-        std::vector<std::string> args = {util::to_s(side_), util::to_s(monitor_rect.x), util::to_s(monitor_rect.y), util::to_s(monitor_rect.width), util::to_s(monitor_rect.height)};
+        auto id = util::getNearestDisplay(rect_.x, rect_.y);
+        SDL_Rect r;
+        Logger::log(SDL_GetError());
+        SDL_GetDisplayBounds(id, &r);
+        Logger::log(SDL_GetError());
+        Logger::log("monitor_rect:", r.x,",", r.y,",", r.w, ",",r.h);
+        std::vector<std::string> args = {util::to_s(side_), util::to_s(r.x), util::to_s(r.y), util::to_s(r.w), util::to_s(r.h)};
         Request req = {"EXECUTE", "UpdateMonitorRect", args};
         enqueueDirectSSTP({req});
         args = {util::to_s(side_), util::to_s(rect_.x), util::to_s(rect_.y), util::to_s(rect_.width), util::to_s(rect_.height)};
