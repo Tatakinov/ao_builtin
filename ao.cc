@@ -173,9 +173,6 @@ bool Ao::init() {
                 res(0) = r.width;
                 res(1) = r.height;
             }
-            else if (event == "ResetBalloonPosition") {
-                resetBalloonPosition();
-            }
             else if (event == "SetBalloonOffset" && req(0) && req(1) && req(2)) {
                 int side, x = 0, y = 0;
                 util::to_x(req(0).value(), side);
@@ -524,12 +521,6 @@ Rect Ao::getRect(int side) {
         return {0, 0, 0, 0};
     }
     return characters_.at(side)->getRect();
-}
-
-void Ao::resetBalloonPosition() {
-    for (auto &[k, v] : characters_) {
-        v->resetBalloonPosition();
-    }
 }
 
 std::optional<Offset> Ao::getCharacterOffset(int side) {

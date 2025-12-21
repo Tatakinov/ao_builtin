@@ -68,8 +68,6 @@ class Ao {
 
         Rect getRect(int side);
 
-        void resetBalloonPosition();
-
         void setBalloonOffset(int side, int x, int y);
         Offset getBalloonOffset(int side);
 
