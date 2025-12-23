@@ -95,65 +95,12 @@ bool Ao::init() {
                     path_ = req(0).value();
                     uuid_ = req(1).value();
                 }
+                loaded_ = true;
+                cond_.notify_one();
             }
             else if (event == "Description") {
                 {
-                    std::unique_lock<std::mutex> lock(mutex_);
-                    for (int i = 0; req(i); i++) {
-                        auto &value = req(i).value();
-                        auto pos = value.find(',');
-                        if (pos == std::string::npos) {
-                            continue;
-                        }
-                        auto key = value.substr(0, pos);
-                        value = value.substr(pos + 1);
-                        info_[key] = value;
-                        do {
-                            std::string tmp, group, name, category, part;
-                            int side = -1, id = -1;
-                            {
-                                std::istringstream iss(key);
-                                std::getline(iss, tmp, '.');
-                                if (tmp == "sakura") {
-                                    side = 0;
-                                }
-                                else if (tmp == "kero") {
-                                    side = 1;
-                                }
-                                else if (tmp.starts_with("char")) {
-                                    util::to_x(tmp.substr(4), side);
-                                }
-                                else {
-                                    break;
-                                }
-                                std::getline(iss, tmp, '.');
-                                if (!tmp.starts_with("bindgroup")) {
-                                    break;
-                                }
-                                util::to_x(tmp.substr(9), id);
-                                std::getline(iss, tmp, '.');
-                                if (tmp != "name") {
-                                    break;
-                                }
-                            }
-                            {
-                                std::istringstream iss(value);
-                                std::getline(iss, category, ',');
-                                if (category.empty()) {
-                                    break;
-                                }
-                                std::getline(iss, part, ',');
-                                if (part.empty()) {
-                                    break;
-                                }
-                            }
-                            key = category + "," + part;
-                            bind_id_[side][key] = id;
-                        } while (false);
-                    }
-                    loaded_ = true;
                 }
-                cond_.notify_one();
             }
             else if (event == "Position" && req(0)) {
                 int side;
@@ -264,6 +211,63 @@ bool Ao::init() {
         cond_.wait(lock, [&] { return loaded_; });
     }
 #endif // DEBUG
+
+    {
+        std::string descript = util::readDescript(ao_dir_ / "descript.txt");
+        std::istringstream iss(descript);
+        std::string value;
+        while (std::getline(iss, value, '\n')) {
+            auto pos = value.find(',');
+            if (pos == std::string::npos) {
+                continue;
+            }
+            auto key = value.substr(0, pos);
+            value = value.substr(pos + 1);
+            info_[key] = value;
+            do {
+                std::string tmp, group, name, category, part;
+                int side = -1, id = -1;
+                {
+                    std::istringstream iss(key);
+                    std::getline(iss, tmp, '.');
+                    if (tmp == "sakura") {
+                        side = 0;
+                    }
+                    else if (tmp == "kero") {
+                        side = 1;
+                    }
+                    else if (tmp.starts_with("char")) {
+                        util::to_x(tmp.substr(4), side);
+                    }
+                    else {
+                        break;
+                    }
+                    std::getline(iss, tmp, '.');
+                    if (!tmp.starts_with("bindgroup")) {
+                        break;
+                    }
+                    util::to_x(tmp.substr(9), id);
+                    std::getline(iss, tmp, '.');
+                    if (tmp != "name") {
+                        break;
+                    }
+                }
+                {
+                    std::istringstream iss(value);
+                    std::getline(iss, category, ',');
+                    if (category.empty()) {
+                        break;
+                    }
+                    std::getline(iss, part, ',');
+                    if (part.empty()) {
+                        break;
+                    }
+                }
+                key = category + "," + part;
+                bind_id_[side][key] = id;
+            } while (false);
+        }
+    }
 
     std::string exe_path;
     exe_path.resize(1024);

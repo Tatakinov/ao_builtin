@@ -2,7 +2,10 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <fstream>
 #include <random>
+
+#include "logger.h"
 
 namespace {
     std::random_device rd;
@@ -89,5 +92,73 @@ namespace util {
         }
         SDL_free(displays);
         return id;
+    }
+
+    std::string readDescript(std::filesystem::path path) {
+        std::ifstream ifs(path, std::ios_base::binary);
+        if (!ifs) {
+            return "";
+        }
+        std::ostringstream oss;
+        std::string buffer;
+        std::string charset = "Shift_JIS";
+        while (std::getline(ifs, buffer, '\n')) {
+            if (buffer.ends_with('\r')) {
+                oss << buffer.substr(0, buffer.length() - 1) << '\n';
+            }
+            else {
+                oss << buffer << '\n';
+            }
+            if (buffer.starts_with("charset,")) {
+                int begin = 8;
+                int end = buffer.length() - 1;
+                for (; begin < buffer.length(); begin++) {
+                    if (buffer[begin] == ' ') {
+                        continue;
+                    }
+                    break;
+                }
+                for (; end > 0; end--) {
+                    if (buffer[begin] == ' ') {
+                        continue;
+                    }
+                    break;
+                }
+                charset = buffer.substr(begin, end - begin);
+                Logger::log("charset in ", path, ": ", charset);
+            }
+        }
+        buffer = oss.str();
+        if (charset == "UTF-8" || buffer.empty()) {
+            return buffer;
+        }
+        std::string converted;
+        converted.resize(buffer.length());
+        do {
+            converted.resize(converted.length() * 2);
+            const char *in = buffer.data();
+            size_t in_length = buffer.length();
+            char *out = converted.data();
+            size_t out_length = converted.length();
+            SDL_iconv_t cd = SDL_iconv_open("UTF-8", charset.c_str());
+            if (reinterpret_cast<size_t>(cd) == SDL_ICONV_ERROR) {
+                Logger::log("iconv_open error");
+                return buffer;
+            }
+            auto err = SDL_iconv(cd, &in, &in_length, &out, &out_length);
+            SDL_iconv_close(cd);
+            if (err == -2) {
+                continue;
+            }
+            else if (err < 0) {
+                Logger::log("iconv error");
+                return buffer;
+            }
+            else {
+                converted.resize(out_length);
+                break;
+            }
+        } while (true);
+        return converted;
     }
 }

@@ -1,6 +1,7 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
+#include <filesystem>
 #include <sstream>
 #include <string>
 
@@ -30,6 +31,8 @@ namespace util {
     bool isWayland();
 
     SDL_DisplayID getNearestDisplay(int x, int y);
+
+    std::string readDescript(std::filesystem::path path);
 }
 
 #endif // UTIL_H_
