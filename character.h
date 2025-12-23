@@ -42,8 +42,8 @@ class Character {
         ~Character();
         void create(SDL_DisplayID display_id);
         void destroy(SDL_DisplayID display_id);
-        bool draw(std::unique_ptr<ImageCache> &cache, bool changed);
-        void swapBuffers();
+        void draw(std::unique_ptr<ImageCache> &cache, bool changed);
+        bool swapBuffers();
         int side() const {
             return side_;
         }

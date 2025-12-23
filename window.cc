@@ -128,10 +128,10 @@ void Window::position(int x, int y) {
     }
 }
 
-bool Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool use_self_alpha) {
+void Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool use_self_alpha) {
     if (current_element_ == element && offset_ == offset && current_texture_ && current_texture_->isUpconverted()) {
         redrawn_ = false;
-        return redrawn_;
+        return;
     }
     auto m = getMonitorRect();
     SDL_SetRenderTarget(renderer_, nullptr);
@@ -206,14 +206,14 @@ bool Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
     current_element_ = element;
     offset_ = offset;
     redrawn_ = true;
-    return redrawn_;
 }
 
-void Window::swapBuffers() {
+bool Window::swapBuffers() {
     if (redrawn_) {
         SDL_SetRenderTarget(renderer_, nullptr);
         SDL_RenderPresent(renderer_);
     }
+    return redrawn_;
 }
 
 double Window::distance(int x, int y) const {

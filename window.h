@@ -59,8 +59,8 @@ class Window {
         void position(int x, int y);
         void focus(int focused);
 
-        bool draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool use_self_alpha);
-        void swapBuffers();
+        void draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool use_self_alpha);
+        bool swapBuffers();
 
         void setPosition(int x, int y) {
             monitor_rect_.x = x;

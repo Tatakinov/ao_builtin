@@ -17,7 +17,8 @@ void Menu::draw() {
     SDL_RenderClear(renderer_);
 }
 
-void Menu::swapBuffers() {
+bool Menu::swapBuffers() {
     SDL_SetRenderTarget(renderer_, nullptr);
     SDL_RenderPresent(renderer_);
+    return true;
 }

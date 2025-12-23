@@ -505,18 +505,18 @@ void Ao::draw() {
         keys.push_back(k);
     }
     std::sort(keys.begin(), keys.end());
-    redrawn_ = false;
     for (auto k : keys) {
-        redrawn_ = characters_.at(k)->draw(cache_, changed) || redrawn_;
+        characters_.at(k)->draw(cache_, changed);
     }
     if (menu_) {
         menu_->draw();
     }
+    redrawn_ = false;
     for (auto k : keys) {
-        characters_.at(k)->swapBuffers();
+        redrawn_ = characters_.at(k)->swapBuffers() || redrawn_;
     }
     if (menu_) {
-        menu_->swapBuffers();
+        redrawn_ = menu_->swapBuffers() || redrawn_;
     }
 }
 

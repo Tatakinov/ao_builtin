@@ -43,7 +43,7 @@ void dump(const ElementWithChildren &e, std::string indent = "") {
 }
 
 
-bool Character::draw(std::unique_ptr<ImageCache> &cache, bool changed) {
+void Character::draw(std::unique_ptr<ImageCache> &cache, bool changed) {
     bool use_self_alpha = (parent_->getInfo("seriko.use_self_alpha", false) == "1");
     auto element = seriko_->get(id_);
     if (changed) {
@@ -56,22 +56,22 @@ bool Character::draw(std::unique_ptr<ImageCache> &cache, bool changed) {
     }
     position_changed_ = false;
     bool upconverted = true;
-    bool redrawn = false;
     for (auto &[_, v] : windows_) {
         if (util::isWayland()) {
-            redrawn = v->draw(cache, {rect_.x, rect_.y}, current_surface_, element, use_self_alpha) || redrawn;
+            v->draw(cache, {rect_.x, rect_.y}, current_surface_, element, use_self_alpha);
         }
         else {
-            redrawn = v->draw(cache, {0, 0}, current_surface_, element, use_self_alpha) || redrawn;
+            v->draw(cache, {0, 0}, current_surface_, element, use_self_alpha);
         }
     }
-    return redrawn;
 }
 
-void Character::swapBuffers() {
+bool Character::swapBuffers() {
+    bool redrawn = false;
     for (auto &[_, v] : windows_) {
-        v->swapBuffers();
+        redrawn = v->swapBuffers() || redrawn;
     }
+    return redrawn;
 }
 
 void Character::show(bool force) {

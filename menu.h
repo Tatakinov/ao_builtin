@@ -15,7 +15,7 @@ class Menu {
             return SDL_GetWindowID(window_) == id;
         }
         void draw();
-        void swapBuffers();
+        bool swapBuffers();
 };
 
 #endif // MENU_H_
