@@ -447,8 +447,8 @@ void Character::wheel(const SDL_MouseWheelEvent &event) {
     }
 }
 
-void Character::reserveMenuParent(SDL_Window *window) {
-    parent_->reserveMenuParent(window);
+void Character::reserveMenuParent(int x, int y) {
+    parent_->reserveMenuParent(x, y);
 }
 
 int Character::scale() const {

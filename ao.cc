@@ -307,6 +307,9 @@ bool Ao::init() {
     surfaces_->dump();
 #endif // DEBUG
 
+    auto fontfamily = fontlist::get_default_font();
+    font_ = std::make_unique<WrapFont>(fontfamily);
+
     return true;
 }
 
@@ -411,12 +414,18 @@ void Ao::draw() {
                         v->create(event.display.displayID);
                     }
                 }
+                if (menu_) {
+                    menu_->create(event.display.displayID);
+                }
                 break;
             case SDL_EVENT_DISPLAY_REMOVED:
                 if (util::isWayland()) {
                     for (auto &[_, v] : characters_) {
                         v->destroy(event.display.displayID);
                     }
+                }
+                if (menu_) {
+                    menu_->destroy(event.display.displayID);
                 }
                 break;
             case SDL_EVENT_KEY_DOWN:
@@ -429,16 +438,25 @@ void Ao::draw() {
                 for (auto &[_, v] : characters_) {
                     v->motion(event.motion);
                 }
+                if (menu_) {
+                    menu_->motion(event.motion);
+                }
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
             case SDL_EVENT_MOUSE_BUTTON_UP:
                 for (auto &[_, v] : characters_) {
                     v->button(event.button);
                 }
+                if (menu_) {
+                    menu_->button(event.button);
+                }
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
                 for (auto &[_, v] : characters_) {
                     v->wheel(event.wheel);
+                }
+                if (menu_) {
+                    menu_->wheel(event.wheel);
                 }
                 break;
             case SDL_EVENT_DROP_FILE:
@@ -446,6 +464,9 @@ void Ao::draw() {
             default:
                 break;
         }
+    }
+    if (menu_ && !menu_->alive()) {
+        menu_.reset();
     }
     std::queue<std::vector<std::string>> queue;
     {
@@ -622,6 +643,6 @@ void Ao::enqueueDirectSSTP(std::vector<Request> list) {
     cond_.notify_one();
 }
 
-void Ao::reserveMenuParent(SDL_Window *window) {
-    menu_ = std::make_unique<Menu>(window);
+void Ao::reserveMenuParent(int x, int y) {
+    menu_ = std::make_unique<Menu>(x, y);
 }

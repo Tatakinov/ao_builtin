@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "character.h"
+#include "font.h"
 #include "image_cache.h"
 #include "menu.h"
 #include "misc.h"
@@ -47,6 +48,7 @@ class Ao {
         bool loaded_;
         bool redrawn_;
         std::unique_ptr<Menu> menu_;
+        std::unique_ptr<WrapFont> font_;
 
     public:
         Ao() : alive_(true), scale_(100), loaded_(false), redrawn_(false) {
@@ -97,7 +99,7 @@ class Ao {
 
         void enqueueDirectSSTP(std::vector<Request> list);
 
-        void reserveMenuParent(SDL_Window *window);
+        void reserveMenuParent(int x, int y);
 
         int scale() const {
             return scale_;

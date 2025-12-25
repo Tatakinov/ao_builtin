@@ -347,9 +347,9 @@ void Window::button(const SDL_MouseButtonEvent &event) {
 
         std::vector<std::string> args;
         Offset offset = parent_->getOffset();
-        x = x - offset.x;
-        y = y - offset.y;
-        args = {util::to_s(x), util::to_s(y), util::to_s(0), util::to_s(parent_->side()), name, util::to_s(b)};
+        int surface_x = x - offset.x;
+        int surface_y = y - offset.y;
+        args = {util::to_s(surface_x), util::to_s(surface_y), util::to_s(0), util::to_s(parent_->side()), name, util::to_s(b)};
 
         if (event.clicks % 2 == 0) {
             Request req = {"NOTIFY", "OnMouseDoubleClick", args};
@@ -359,14 +359,15 @@ void Window::button(const SDL_MouseButtonEvent &event) {
             Request up = {"NOTIFY", "OnMouseUp", args};
             Request click = {"NOTIFY", "OnMouseClick", args};
             parent_->enqueueDirectSSTP({up, click});
-            parent_->reserveMenuParent(window_);
+            // debug code
+            parent_->reserveMenuParent(x, y);
         }
         else {
             Request up = {"NOTIFY", "OnMouseUp", args};
             Request click = {"NOTIFY", "OnMouseClick", args};
 #if 0
             // 右クリックメニューを呼び出す
-            args = {util::to_s(parent_->side()), util::to_s(x), util::to_s(y)};
+            args = {util::to_s(parent_->side()), util::to_s(surface_x), util::to_s(surface_y)};
             Request menu = {"EXECUTE", "OpenMenu", args};
             parent_->enqueueDirectSSTP({up, click, menu});
 #else

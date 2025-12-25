@@ -1,24 +1,79 @@
 #include "menu.h"
 
-Menu::Menu(SDL_Window* parent) {
-    window_ = SDL_CreatePopupWindow(parent, 0, 0, 200, 200, SDL_WINDOW_POPUP_MENU | SDL_WINDOW_ALWAYS_ON_TOP);
-    renderer_ = SDL_CreateRenderer(window_, nullptr);
+#include "util.h"
+
+Menu::Menu(int x, int y) : alive_(true) {
+    main_display_ = util::getNearestDisplay(x, y);
+    SDL_Rect r;
+    SDL_GetDisplayBounds(main_display_, &r);
+    if (x < r.x || x > r.x + r.w || y < r.y || y > r.y + r.h) {
+        alive_ = false;
+        return;
+    }
+    int count;
+    auto *displays = SDL_GetDisplays(&count);
+    for (int i = 0; i < count; i++) {
+        if (main_display_ == displays[i]) {
+            windows_[displays[i]] = std::make_unique<MenuMainWindow>(this, displays[i], x - r.x, y - r.y);
+        }
+        else {
+            windows_[displays[i]] = std::make_unique<MenuWindow>(this, displays[i]);
+        }
+    }
+    SDL_free(displays);
 }
 
 Menu::~Menu() {
-    if (window_ != nullptr) {
-        SDL_DestroyWindow(window_);
+    windows_.clear();
+}
+
+void Menu::kill() {
+    alive_ = false;
+}
+
+bool Menu::alive() const {
+    return alive_;
+}
+
+void Menu::create(SDL_DisplayID id) {
+    windows_[id] = std::make_unique<MenuWindow>(this, id);
+}
+
+void Menu::destroy(SDL_DisplayID id) {
+    if (id == main_display_) {
+        alive_ = false;
     }
+    windows_.erase(id);
 }
 
 void Menu::draw() {
-    SDL_SetRenderTarget(renderer_, nullptr);
-    SDL_SetRenderDrawColor(renderer_, 0xff, 0xff, 0xff, 0xff);
-    SDL_RenderClear(renderer_);
+    for (auto &[_, v] : windows_) {
+        v->draw();
+    }
 }
 
 bool Menu::swapBuffers() {
-    SDL_SetRenderTarget(renderer_, nullptr);
-    SDL_RenderPresent(renderer_);
-    return true;
+    bool redrawn = false;
+    for (auto &[_, v] : windows_) {
+        redrawn = v->swapBuffers() || redrawn;
+    }
+    return redrawn;
+}
+
+void Menu::motion(const SDL_MouseMotionEvent &event) {
+    for (auto &[_, v] : windows_) {
+        v->motion(event);
+    }
+}
+
+void Menu::button(const SDL_MouseButtonEvent &event) {
+    for (auto &[_, v] : windows_) {
+        v->button(event);
+    }
+}
+
+void Menu::wheel(const SDL_MouseWheelEvent &event) {
+    for (auto &[_, v] : windows_) {
+        v->wheel(event);
+    }
 }
