@@ -1,8 +1,12 @@
 #ifndef MENU_WINDOW_H_
 #define MENU_WINDOW_H_
 
+#include <vector>
+
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_video.h>
+
+#include "menu_model.h"
 
 class Menu;
 
@@ -17,6 +21,7 @@ class MenuWindow {
         MenuWindow(Menu *menu, SDL_DisplayID id);
         virtual ~MenuWindow();
         void draw();
+        virtual void setMenuModel(std::vector<MenuModelData> &model);
         virtual void drawContent();
         bool swapBuffers();
         virtual void motion(const SDL_MouseMotionEvent &event);

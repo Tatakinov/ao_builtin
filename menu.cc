@@ -1,8 +1,9 @@
 #include "menu.h"
 
+#include "logger.h"
 #include "util.h"
 
-Menu::Menu(int x, int y) : alive_(true) {
+Menu::Menu(int x, int y, std::unique_ptr<WrapFont> &font) : alive_(true) {
     main_display_ = util::getNearestDisplay(x, y);
     SDL_Rect r;
     SDL_GetDisplayBounds(main_display_, &r);
@@ -14,13 +15,23 @@ Menu::Menu(int x, int y) : alive_(true) {
     auto *displays = SDL_GetDisplays(&count);
     for (int i = 0; i < count; i++) {
         if (main_display_ == displays[i]) {
-            windows_[displays[i]] = std::make_unique<MenuMainWindow>(this, displays[i], x - r.x, y - r.y);
+            windows_[displays[i]] = std::make_unique<MenuMainWindow>(this, displays[i], x - r.x, y - r.y, font);
         }
         else {
             windows_[displays[i]] = std::make_unique<MenuWindow>(this, displays[i]);
         }
     }
     SDL_free(displays);
+
+    // debug code
+    MenuModelDataAction data = {
+        .action_type = 0,
+        .valid = true,
+        .title = "Testだよ。"
+    };
+    std::vector<MenuModelData> model;
+    model.push_back(data);
+    setMenuModel(model);
 }
 
 Menu::~Menu() {
@@ -33,6 +44,10 @@ void Menu::kill() {
 
 bool Menu::alive() const {
     return alive_;
+}
+
+void Menu::setMenuModel(std::vector<MenuModelData> &model) {
+    windows_.at(main_display_)->setMenuModel(model);
 }
 
 void Menu::create(SDL_DisplayID id) {

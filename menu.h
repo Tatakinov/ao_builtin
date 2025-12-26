@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include <SDL3/SDL_video.h>
 
@@ -16,13 +17,13 @@ class Menu {
         SDL_DisplayID main_display_;
         std::unordered_map<SDL_DisplayID, std::unique_ptr<MenuWindow>> windows_;
     public:
-        Menu(int x, int y);
+        Menu(int x, int y, std::unique_ptr<WrapFont> &font);
         ~Menu();
         void create(SDL_DisplayID id);
         void destroy(SDL_DisplayID id);
         void kill();
         bool alive() const;
-        void setMenuModel(MenuModel &model);
+        void setMenuModel(std::vector<MenuModelData> &model);
         void motion(const SDL_MouseMotionEvent &event);
         void button(const SDL_MouseButtonEvent &event);
         void wheel(const SDL_MouseWheelEvent &event);

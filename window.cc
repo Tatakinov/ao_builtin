@@ -316,6 +316,9 @@ void Window::button(const SDL_MouseButtonEvent &event) {
     if (event.windowID != SDL_GetWindowID(window_)) {
         return;
     }
+    if (mouse_state_[event.button].press == event.down) {
+        return;
+    }
     mouse_state_[event.button].press = event.down;
     if (event.button == MOUSE_BUTTON_LEFT && !mouse_state_[event.button].press) {
         parent_->resetDrag();

@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include "logger.h"
 #include "menu.h"
 
 MenuWindow::MenuWindow(Menu *menu, SDL_DisplayID id): changed_(true), parent_(menu) {
@@ -35,6 +36,10 @@ void MenuWindow::draw() {
         SDL_RenderClear(renderer_);
         drawContent();
     }
+}
+
+void MenuWindow::setMenuModel(std::vector<MenuModelData> &model) {
+    // nop
 }
 
 void MenuWindow::drawContent() {

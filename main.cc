@@ -18,6 +18,10 @@ int main(int argc, char **argv) {
         return 1;
     }
     atexit(SDL_Quit);
+    if (!TTF_Init()) {
+        return 1;
+    }
+    atexit(TTF_Quit);
 
     Ao ao;
 

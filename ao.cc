@@ -644,5 +644,5 @@ void Ao::enqueueDirectSSTP(std::vector<Request> list) {
 }
 
 void Ao::reserveMenuParent(int x, int y) {
-    menu_ = std::make_unique<Menu>(x, y);
+    menu_ = std::make_unique<Menu>(x, y, font_);
 }
