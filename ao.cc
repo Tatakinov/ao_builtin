@@ -318,7 +318,7 @@ std::string Ao::getInfo(std::string key, bool fallback) {
         return info_.at(key);
     }
     if (fallback) {
-        auto res = sstp::Response::parse(Ao::sendDirectSSTP("EXECUTE", "GetSurfaceInfo", {key}));
+        auto res = sstp::Response::parse(Ao::sendDirectSSTP("EXECUTE", "GetDescript", {key}));
         std::string content = res.getContent();
         if (content.empty()) {
             Logger::log("info(", key, "): not found");

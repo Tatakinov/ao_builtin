@@ -12,6 +12,10 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_video.h>
 
+#if defined(__unix__)
+#include <wayland-client.h>
+#endif // Linux/Unix
+
 #include "element.h"
 #include "image_cache.h"
 #include "logger.h"
@@ -46,14 +50,24 @@ class Window {
         ElementWithChildren current_element_;
         std::unique_ptr<WrapTexture> current_texture_;
         bool redrawn_;
+#if defined(__unix__)
+        wl_registry *reg_;
+        wl_compositor *compositor_;
+#endif // Linux/Unix
 
     public:
         Window(Character *parent, SDL_DisplayID id);
         virtual ~Window();
 
-        operator bool() {
-            return true;
+#if defined(__unix__)
+        void setCompositor(wl_compositor *compositor) {
+            compositor_ = compositor;
         }
+
+        wl_compositor *compositor() {
+            return compositor_;
+        }
+#endif // Linux/Unix
 
         void resize(int width, int height);
         void position(int x, int y);

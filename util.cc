@@ -41,7 +41,7 @@ namespace util {
 
     bool isWayland() {
         std::string wayland = "wayland";
-        return (getenv("XDG_SESSION_TYPE") != nullptr && wayland == getenv("XDG_SESSION_TYPE"));
+        return (SDL_GetCurrentVideoDriver() != nullptr && wayland == SDL_GetCurrentVideoDriver());
     }
 
     SDL_DisplayID getNearestDisplay(int x, int y) {

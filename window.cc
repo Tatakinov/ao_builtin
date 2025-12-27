@@ -81,25 +81,31 @@ Window::Window(Character *parent, SDL_DisplayID id)
         SDL_SetNumberProperty(p, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, monitor_rect_.height);
         window_ = SDL_CreateWindowWithProperties(p);
     }
-#if 0
-    else if (util::isWayland()) {
-        int w = 0, h = 0;
-        if (w == 0 || h == 0) {
-            w = h = 200;
-        }
-        window_ = SDL_CreateWindow(parent_->name().c_str(), w, h, SDL_WINDOW_TRANSPARENT);
-        //SDL_MaximizeWindow(window_);
-        SDL_SyncWindow(window_);
-        SDL_GetWindowSize(window_, &w, &h);
-        monitor_rect_ = { 0, 0, w, h };
-    }
-#endif
     else {
         window_ = SDL_CreateWindow(parent_->name().c_str(), 200, 200, SDL_WINDOW_TRANSPARENT | SDL_WINDOW_BORDERLESS | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
     }
     renderer_ = SDL_CreateRenderer(window_, nullptr);
     SDL_SetRenderVSync(renderer_, 1);
     texture_cache_ = std::make_unique<TextureCache>();
+#if defined(__unix__)
+    if (util::isWayland()) {
+        const wl_registry_listener listener = {
+            [](void *data, wl_registry *reg, uint32_t id, const char *interface, uint32_t version) {
+                Window *window = static_cast<Window *>(data);
+                std::string s = interface;
+                if (s == "wl_compositor") {
+                    window->setCompositor(static_cast<wl_compositor *>(wl_registry_bind(reg, id, &wl_compositor_interface, 1)));
+                }
+            },
+            [](void *data, wl_registry *reg, uint32_t id) {
+            }
+        };
+        wl_display *display = static_cast<wl_display *>(SDL_GetPointerProperty(SDL_GetWindowProperties(window_), SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, nullptr));
+        reg_ = wl_display_get_registry(display);
+        wl_registry_add_listener(reg_, &listener, this);
+        wl_display_roundtrip(display);
+    }
+#endif // Linux/Unix
 }
 
 Window::~Window() {
@@ -107,6 +113,12 @@ Window::~Window() {
         SDL_DestroyRenderer(renderer_);
         SDL_DestroyWindow(window_);
     }
+#if defined(__unix__)
+    if (util::isWayland()) {
+        wl_compositor_destroy(compositor_);
+        wl_registry_destroy(reg_);
+    }
+#endif // Linux/Unix
 }
 
 void Window::resize(int width, int height) {
@@ -120,6 +132,7 @@ void Window::focus(int focused) {
 
 void Window::position(int x, int y) {
     if (!util::isWayland()) {
+        Logger::log("move: ", x, ", ", y);
         SDL_SetWindowPosition(window_, x, y);
     }
     {
@@ -299,11 +312,17 @@ void Window::motion(const SDL_MouseMotionEvent &event) {
         auto [dx, dy, px, py] = parent_->drag().value();
         auto x = event.x;
         auto y = event.y;
+        Logger::log("drag: ", dx, " ", dy, " ", px, " ", py, " ", x, " ", y);
         if (util::isWayland()) {
             x = x + monitor_rect_.x;
             y = y + monitor_rect_.y;
         }
-        parent_->setOffset(px + x - dx, py + y - dy);
+        x += px - dx;
+        y += py - dy;
+        parent_->setOffset(x, y);
+        if (!util::isWayland()) {
+            parent_->setDrag(dx, dy);
+        }
     }
     for (auto &[k, v] : mouse_state_) {
         if (v.press) {
