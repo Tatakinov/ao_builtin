@@ -161,4 +161,9 @@ namespace util {
         } while (true);
         return converted;
     }
+
+    SDL_DisplayID getCurrentDisplayID() {
+        // TODO stub
+        return 0;
+    }
 }

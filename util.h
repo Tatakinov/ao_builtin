@@ -33,6 +33,8 @@ namespace util {
     SDL_DisplayID getNearestDisplay(int x, int y);
 
     std::string readDescript(std::filesystem::path path);
+
+    SDL_DisplayID getCurrentDisplayID();
 }
 
 #endif // UTIL_H_

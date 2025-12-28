@@ -115,8 +115,9 @@ Window::~Window() {
     }
 #if defined(__unix__)
     if (util::isWayland()) {
-        wl_compositor_destroy(compositor_);
-        wl_registry_destroy(reg_);
+        if (reg_ != nullptr) {
+            wl_registry_destroy(reg_);
+        }
     }
 #endif // Linux/Unix
 }

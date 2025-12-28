@@ -338,13 +338,17 @@ void Ao::create(int side) {
     auto name = getInfo(s + ".name", true);
     characters_.emplace(side, std::make_unique<Character>(this, side, name.c_str(), surfaces_->getSeriko()));
     // TODO dynamic
-    if (util::isWayland()) {
+    if (util::isWayland() && getenv("NINIX_ENABLE_MULTI_MONITOR")) {
         int count = 0;
         auto *monitors = SDL_GetDisplays(&count);
         for (int i = 0; i < count; i++) {
             characters_.at(side)->create(monitors[i]);
         }
         SDL_free(monitors);
+    }
+    else if (util::isWayland()) {
+        SDL_DisplayID id = util::getCurrentDisplayID();
+        characters_.at(side)->create(id);
     }
     else {
         characters_.at(side)->create(0);
@@ -409,7 +413,7 @@ void Ao::draw() {
                 alive_ = false;
                 return;
             case SDL_EVENT_DISPLAY_ADDED:
-                if (util::isWayland()) {
+                if (util::isWayland() && getenv("NINIX_ENABLE_MULTI_MONITOR")) {
                     for (auto &[_, v] : characters_) {
                         v->create(event.display.displayID);
                     }
@@ -419,7 +423,7 @@ void Ao::draw() {
                 }
                 break;
             case SDL_EVENT_DISPLAY_REMOVED:
-                if (util::isWayland()) {
+                if (util::isWayland() && getenv("NINIX_ENABLE_MULTI_MONITOR")) {
                     for (auto &[_, v] : characters_) {
                         v->destroy(event.display.displayID);
                     }
