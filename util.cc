@@ -310,6 +310,12 @@ namespace util {
 
         wl_display_roundtrip(thing.display);
 
+        free_thing.reset();
+
+        xdg_wm_base_destroy(thing.wm_base);
+        wl_compositor_destroy(thing.compositor);
+        wl_display_disconnect(thing.display);
+
         SDL_DisplayID id = 0;
         for (int i = 0; i < count; i++) {
             SDL_Rect r;
