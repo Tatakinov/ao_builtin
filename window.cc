@@ -87,17 +87,17 @@ Window::Window(Character *parent, SDL_DisplayID id)
     renderer_ = SDL_CreateRenderer(window_, nullptr);
     SDL_SetRenderVSync(renderer_, 1);
     texture_cache_ = std::make_unique<TextureCache>();
-#if defined(__unix__)
+#if defined(IS__NIX)
     if (util::isWayland()) {
         const wl_registry_listener listener = {
-            [](void *data, wl_registry *reg, uint32_t id, const char *interface, uint32_t version) {
+            .global = [](void *data, wl_registry *reg, uint32_t id, const char *interface, uint32_t version) {
                 Window *window = static_cast<Window *>(data);
                 std::string s = interface;
                 if (s == "wl_compositor") {
                     window->setCompositor(static_cast<wl_compositor *>(wl_registry_bind(reg, id, &wl_compositor_interface, 1)));
                 }
             },
-            [](void *data, wl_registry *reg, uint32_t id) {
+            .global_remove = [](void *data, wl_registry *reg, uint32_t id) {
             }
         };
         wl_display *display = static_cast<wl_display *>(SDL_GetPointerProperty(SDL_GetWindowProperties(window_), SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, nullptr));
@@ -113,7 +113,7 @@ Window::~Window() {
         SDL_DestroyRenderer(renderer_);
         SDL_DestroyWindow(window_);
     }
-#if defined(__unix__)
+#if defined(IS__NIX)
     if (util::isWayland()) {
         if (reg_ != nullptr) {
             wl_registry_destroy(reg_);
@@ -188,34 +188,78 @@ void Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
     }
     if (surface) {
         std::vector<int> shape;
+#if defined(IS__NIX)
+        wl_region *region = wl_compositor_create_region(compositor_);
+        int x_begin = -1;
+        bool is_wayland = util::isWayland();
+#endif // Linux/Unix
         {
             SDL_LockSurface(surface->surface());
-            for (int i = 0; i < surface->width() * surface->height(); i++) {
-                unsigned char *p = static_cast<unsigned char *>(surface->surface()->pixels);
-                if (p[4 * i + 3]) {
-                    shape.push_back(i);
+            for (int y = 0; y < surface->height(); y++) {
+                for (int x = 0; x < surface->width(); x++) {
+                    unsigned char *p = static_cast<unsigned char *>(surface->surface()->pixels);
+                    int index = y * surface->width() + x;
+                    if (p[4 * index + 3]) {
+                        shape.push_back(index);
+#if defined(IS__NIX)
+                        if (x_begin == -1 && is_wayland) {
+                            x_begin = x;
+                        }
+                    }
+                    else {
+                        if (x_begin != -1) {
+                            wl_region_add(region, offset.x - m.x + x_begin, offset.y - m.y + y, x - x_begin, 1);
+                            x_begin = -1;
+                        }
+#endif // Linux/Unix
+                    }
                 }
+#if defined(IS__NIX)
+                if (x_begin != -1 && is_wayland) {
+                    wl_region_add(region, offset.x - m.x + x_begin, offset.y - m.y + y, surface->width() - x_begin, 1);
+                    x_begin = -1;
+                }
+#endif // Linux/Unix
             }
             SDL_UnlockSurface(surface->surface());
         }
         if (!shape_ || shape_ != shape || offset_ != offset) {
-            int w, h;
-            SDL_GetWindowSize(window_, &w, &h);
-            auto s = std::make_unique<WrapSurface>(w, h);
-            SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
-            SDL_Rect r = { offset.x - m.x, offset.y - m.y, surface->width(), surface->height() };
-            SDL_BlitSurface(surface->surface(), nullptr, s->surface(), &r);
-            SDL_SetWindowShape(window_, s->surface());
+#if defined(IS__NIX)
+            if (is_wayland) {
+                wl_surface *surface = static_cast<wl_surface *>(SDL_GetPointerProperty(SDL_GetWindowProperties(window_), SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER, nullptr));
+                wl_surface_set_input_region(surface, region);
+            }
+            else
+#endif // Linux/Unix
+            {
+                int w, h;
+                SDL_GetWindowSize(window_, &w, &h);
+                auto s = std::make_unique<WrapSurface>(w, h);
+                SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
+                SDL_Rect r = { offset.x - m.x, offset.y - m.y, surface->width(), surface->height() };
+                SDL_BlitSurface(surface->surface(), nullptr, s->surface(), &r);
+                SDL_SetWindowShape(window_, s->surface());
+            }
             shape_ = shape;
         }
     }
     else if (!shape_ || shape_->size() > 0) {
         shape_ = std::make_optional<std::vector<int>>();
-        int w, h;
-        SDL_GetWindowSize(window_, &w, &h);
-        auto s = std::make_unique<WrapSurface>(w, h);
-        SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
-        SDL_SetWindowShape(window_, s->surface());
+#if defined(IS__NIX)
+        if (util::isWayland()) {
+            wl_region *region = wl_compositor_create_region(compositor_);
+            wl_surface *surface = static_cast<wl_surface *>(SDL_GetPointerProperty(SDL_GetWindowProperties(window_), SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER, nullptr));
+            wl_surface_set_input_region(surface, region);
+        }
+        else
+#endif // Linux/Unix
+        {
+            int w, h;
+            SDL_GetWindowSize(window_, &w, &h);
+            auto s = std::make_unique<WrapSurface>(w, h);
+            SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
+            SDL_SetWindowShape(window_, s->surface());
+        }
     }
     current_element_ = element;
     offset_ = offset;

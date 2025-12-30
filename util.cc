@@ -1,4 +1,5 @@
 #include "util.h"
+#include "misc.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -8,7 +9,7 @@
 
 #include <SDL3/SDL.h>
 
-#if defined(__unix__)
+#if defined(IS__NIX)
 #include <wayland-client-protocol.h>
 
 #include "xdg-shell-client-protocol.h"
@@ -16,7 +17,7 @@
 
 #include "logger.h"
 
-#if defined(__unix__)
+#if defined(IS__NIX)
 struct display_info {
     int width, height, refresh;
 };
@@ -50,13 +51,12 @@ struct free_required_wl_thing {
         }
     }
 };
-
 #endif // Linux/Unix
 
 namespace {
     std::random_device rd;
     std::mt19937 mt(rd());
-#if defined(__unix__)
+#if defined(IS__NIX)
     xdg_toplevel_listener t_listener = {
         .configure = [](void *data, xdg_toplevel *toplevel, int32_t width, int32_t height, wl_array *states) {
             Logger::log("toplevel.configure: ", width, height);

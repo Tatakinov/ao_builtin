@@ -1,15 +1,16 @@
 #ifndef MISC_H_
 #define MISC_H_
 
+#include <string>
 #include <vector>
 
 #if defined(_WIN32) || defined(WIN32)
 #define IS_WINDOWS 1
 #endif // WIN32
 
-#if defined(__linux__)
-#define IS_LINUX 1
-#endif // Linux
+#if defined(__unix__) && !defined(__APPLE__)
+#define IS__NIX
+#endif // Linux/Unix
 
 enum class BindFlag {
     True, False, Toggle,

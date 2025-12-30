@@ -1,6 +1,8 @@
 #ifndef WINDOW_H_
 #define WINDOW_H_
 
+#include "misc.h"
+
 #include <chrono>
 #include <iostream>
 #include <memory>
@@ -12,7 +14,7 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_video.h>
 
-#if defined(__unix__)
+#if defined(IS__NIX)
 #include <wayland-client.h>
 #endif // Linux/Unix
 
@@ -50,7 +52,7 @@ class Window {
         ElementWithChildren current_element_;
         std::unique_ptr<WrapTexture> current_texture_;
         bool redrawn_;
-#if defined(__unix__)
+#if defined(IS__NIX)
         wl_registry *reg_;
         wl_compositor *compositor_;
 #endif // Linux/Unix
@@ -59,7 +61,7 @@ class Window {
         Window(Character *parent, SDL_DisplayID id);
         virtual ~Window();
 
-#if defined(__unix__)
+#if defined(IS__NIX)
         void setCompositor(wl_compositor *compositor) {
             compositor_ = compositor;
         }
