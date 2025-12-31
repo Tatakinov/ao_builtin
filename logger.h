@@ -24,7 +24,7 @@ class Logger {
         static void log(Head&& h, Remain&&... remain) {
             if (ofs_) {
                 std::unique_lock<std::mutex> lock(mutex_);
-                *ofs_ << h;
+                *ofs_ << h << " ";
             }
             log(std::forward<Remain>(remain)...);
         }
