@@ -31,7 +31,7 @@ std::unique_ptr<WrapTexture> ElementWithChildren::getTexture(SDL_Renderer *rende
     }
     if (w == 0 || h == 0) {
         std::unique_ptr<WrapTexture> invalid;
-        Logger::log("no valid children");
+        //Logger::log("no valid children");
         return invalid;
     }
     auto texture = std::make_unique<WrapTexture>(renderer, w, h, upconverted);
@@ -100,7 +100,7 @@ std::unique_ptr<WrapSurface> ElementWithChildren::getSurface(std::unique_ptr<Ima
     }
     if (w == 0 || h == 0) {
         std::unique_ptr<WrapSurface> invalid;
-        Logger::log("no valid children");
+        //Logger::log("no valid children");
         return invalid;
     }
     auto surface = std::make_unique<WrapSurface>(w, h);
