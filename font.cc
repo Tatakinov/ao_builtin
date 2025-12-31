@@ -15,7 +15,7 @@ WrapFont::WrapFont(const fontlist::fontfamily &family) : name_(family.name) {
         }
     }
     font_ = TTF_OpenFont(font.file.string().c_str(), font.size);
-    TTF_SetFontSizeDPI(font_, font.size, 96, 96);
+    //TTF_SetFontSizeDPI(font_, font.size, 96, 96);
 }
 
 WrapFont::WrapFont(const std::filesystem::path &path) : name_("") {
