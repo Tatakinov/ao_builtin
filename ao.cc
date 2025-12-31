@@ -529,9 +529,7 @@ void Ao::draw() {
             Json::Value value;
             reader.parse(args[1], value);
             auto data = parseMenuInfo(value);
-            if (menu_) {
-                menu_->setMenuModel(data);
-            }
+            menu_ = std::make_unique<Menu>(menu_init_info_.side, menu_init_info_.x, menu_init_info_.y, font_, data);
         }
     }
     std::vector<int> keys;
@@ -554,6 +552,16 @@ void Ao::draw() {
     }
 }
 
+namespace {
+    std::vector<std::string> toList(Json::Value &value) {
+        std::vector<std::string> list;
+        for (int i = 0; !value[i].isNull(); i++) {
+            list.push_back(value[i].asString());
+        }
+        return list;
+    }
+}
+
 std::vector<MenuModelData> Ao::parseMenuInfo(Json::Value &value) {
     std::vector<MenuModelData> data;
     for (int i = 0; !value[i].isNull(); i++) {
@@ -561,10 +569,21 @@ std::vector<MenuModelData> Ao::parseMenuInfo(Json::Value &value) {
         auto type = v["type"].asString();
         if (type == "submenu") {
             MenuModelDataSubMenu submenu = {
+                .action = ActionType::None,
                 .caption = v["caption"].asString(),
                 .children = parseMenuInfo(v["list"]),
             };
             data.push_back(submenu);
+            assert(std::holds_alternative<MenuModelDataSubMenu>(data.back()));
+        }
+        if (type == "site") {
+            MenuModelDataActionWithArgs args = {
+                .action = ActionType::Site,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+                .args = toList(v["list"]),
+            };
+            data.push_back(args);
         }
         if (type == "check") {
             MenuModelDataActionWithBoolean check = {
@@ -584,29 +603,29 @@ std::vector<MenuModelData> Ao::parseMenuInfo(Json::Value &value) {
             data.push_back(action);
         }
         if (type == "switch") {
-            MenuModelDataActionWithString action = {
+            MenuModelDataActionWithArgs action = {
                 .action = ActionType::Switch,
                 .valid = v["valid"].asBool(),
                 .caption = v["caption"].asString(),
-                .arg = v["key"].asString(),
+                .args = toList(v["list"])
             };
             data.push_back(action);
         }
         if (type == "call") {
-            MenuModelDataActionWithString action = {
+            MenuModelDataActionWithArgs action = {
                 .action = ActionType::Call,
                 .valid = v["valid"].asBool(),
                 .caption = v["caption"].asString(),
-                .arg = v["key"].asString(),
+                .args = toList(v["list"])
             };
             data.push_back(action);
         }
         if (type == "shell") {
-            MenuModelDataActionWithString action = {
+            MenuModelDataActionWithArgs action = {
                 .action = ActionType::Call,
                 .valid = v["valid"].asBool(),
                 .caption = v["caption"].asString(),
-                .arg = v["key"].asString(),
+                .args = toList(v["list"])
             };
             data.push_back(action);
         }
@@ -618,11 +637,11 @@ std::vector<MenuModelData> Ao::parseMenuInfo(Json::Value &value) {
             data.push_back(dressup);
         }
         if (type == "balloon") {
-            MenuModelDataActionWithString action = {
+            MenuModelDataActionWithArgs action = {
                 .action = ActionType::Balloon,
                 .valid = v["valid"].asBool(),
                 .caption = v["caption"].asString(),
-                .arg = v["key"].asString(),
+                .args = toList(v["list"])
             };
             data.push_back(action);
         }
@@ -776,5 +795,5 @@ void Ao::enqueueDirectSSTP(std::vector<Request> list) {
 }
 
 void Ao::reserveMenuParent(int side, int x, int y) {
-    menu_ = std::make_unique<Menu>(side, x, y, font_);
+    menu_init_info_ = {side, x, y};
 }

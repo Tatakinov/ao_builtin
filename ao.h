@@ -29,6 +29,10 @@
 class Character;
 class Surfaces;
 
+struct MenuInitInfo {
+    int side, x, y;
+};
+
 class Ao {
     private:
         std::mutex mutex_;
@@ -50,6 +54,7 @@ class Ao {
         bool loaded_;
         bool redrawn_;
         std::unique_ptr<Menu> menu_;
+        MenuInitInfo menu_init_info_;
         std::unique_ptr<WrapFont> font_;
 
     public:

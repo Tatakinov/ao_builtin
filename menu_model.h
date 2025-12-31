@@ -2,6 +2,7 @@
 #define MENU_MODEL_H_
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -10,12 +11,8 @@
 #include "misc.h"
 #include "texture.h"
 
-enum class MenuModelType {
-    Action, ActionWithBoolean, ActionWithString, SubMenu
-};
-
 enum class ActionType {
-    None, StayOnTop, Preferences, Switch, Call, Shell, DressUp,
+    None, Site, StayOnTop, Preferences, Switch, Call, Shell, DressUp,
     Balloon, BasewareVersion, Close, CloseAll,
 };
 
@@ -32,35 +29,36 @@ struct MenuModelDataActionWithBoolean {
     bool state;
 };
 
-struct MenuModelDataActionWithString {
+struct MenuModelDataActionWithArgs {
     ActionType action;
     bool valid;
     std::string caption;
-    std::string arg;
+    std::vector<std::string> args;
 };
 
 struct MenuModelDataSubMenu {
+    ActionType action;
     std::string caption;
-    std::vector<std::variant<MenuModelDataAction, MenuModelDataActionWithString, MenuModelDataActionWithBoolean, MenuModelDataSubMenu>> children;
+    std::vector<std::variant<MenuModelDataAction, MenuModelDataActionWithArgs, MenuModelDataActionWithBoolean, MenuModelDataSubMenu>> children;
 };
 
-using MenuModelData = std::variant<MenuModelDataAction, MenuModelDataActionWithString, MenuModelDataActionWithBoolean, MenuModelDataSubMenu>;
+using MenuModelData = std::variant<MenuModelDataAction, MenuModelDataActionWithArgs, MenuModelDataActionWithBoolean, MenuModelDataSubMenu>;
 
 class MenuItem {
     private:
         MenuModelData &data_;
         std::unique_ptr<WrapFont> &font_;
         SDL_Surface *surface_;
+        bool highlight_;
     public:
         MenuItem(MenuModelData &data, std::unique_ptr<WrapFont> &font);
         ~MenuItem();
-        MenuModelData &getModel() {
-            return data_;
-        }
+        std::optional<std::vector<MenuModelData>> getModel();
+        ActionType getAction();
         int width() const;
         int height() const;
         SDL_Surface *surface();
-        void highlight();
+        bool highlight(int x, int y);
         void unhighlight();
 };
 
@@ -72,15 +70,18 @@ class MenuModel {
         int scroll_;
         bool changed_;
         std::unique_ptr<WrapSurface> cache_;
+        int index_;
     public:
         MenuModel(std::vector<MenuModelData> &data, const Rect parent_r, const Rect display_r, std::unique_ptr<WrapFont> &font);
         ~MenuModel();
-        MenuModelData &get(int index);
+        int getSelectedItemY();
+        std::optional<std::vector<MenuModelData>> getSubModel();
+        std::optional<ActionType> getAction();
         Rect rect() {
             return r_;
         }
-        void highlight(int index);
-        void unhighlight(int index);
+        bool highlight(int x, int y);
+        void unhighlight();
         void change();
         std::unique_ptr<WrapSurface> &getSurface();
 };

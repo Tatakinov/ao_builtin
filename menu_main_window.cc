@@ -33,11 +33,39 @@ void MenuMainWindow::motion(const SDL_MouseMotionEvent &event) {
     if (event.windowID != SDL_GetWindowID(window_)) {
         return;
     }
+    int depth = model_.size();
+    for (auto &v : model_) {
+        v->unhighlight();
+    }
+    for (auto v = model_.rbegin(); v != model_.rend(); v++) {
+        if ((*v)->highlight(event.x, event.y)) {
+            break;
+        }
+        depth--;
+    }
+    if (depth > 0 && depth < model_.size()) {
+        model_.erase(std::next(model_.begin(), depth), model_.end());
+    }
+    auto submenu = model_.back()->getSubModel();
+    if (submenu) {
+        auto r = model_.back()->rect();
+        r.y += model_.back()->getSelectedItemY();
+        model_.push_back(std::make_unique<MenuModel>(submenu.value(), r, r_, font_));
+    }
+    change();
 }
 
 void MenuMainWindow::button(const SDL_MouseButtonEvent &event) {
     if (event.windowID != SDL_GetWindowID(window_)) {
         return;
+    }
+    auto action = model_.back()->getAction();
+    if (action) {
+        switch (action.value()) {
+            default:
+                // nop
+                break;
+        }
     }
     MenuWindow::button(event);
 }

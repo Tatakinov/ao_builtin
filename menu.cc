@@ -3,7 +3,7 @@
 #include "logger.h"
 #include "util.h"
 
-Menu::Menu(int side, int x, int y, std::unique_ptr<WrapFont> &font) : alive_(true), side_(side) {
+Menu::Menu(int side, int x, int y, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model) : alive_(true), side_(side), model_(model) {
     if (util::isWayland() && !getenv("NINIX_ENABLE_MULTI_MONITOR")) {
         main_display_ = util::getCurrentDisplayID();
         SDL_Rect r;
@@ -35,6 +35,7 @@ Menu::Menu(int side, int x, int y, std::unique_ptr<WrapFont> &font) : alive_(tru
         }
         SDL_free(displays);
     }
+    windows_.at(main_display_)->setMenuModel(model_);
 }
 
 Menu::~Menu() {
@@ -47,10 +48,6 @@ void Menu::kill() {
 
 bool Menu::alive() const {
     return alive_;
-}
-
-void Menu::setMenuModel(std::vector<MenuModelData> &model) {
-    windows_.at(main_display_)->setMenuModel(model);
 }
 
 void Menu::create(SDL_DisplayID id) {

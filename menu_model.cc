@@ -2,7 +2,11 @@
 
 #include "logger.h"
 
-MenuItem::MenuItem(MenuModelData &data, std::unique_ptr<WrapFont> &font) : data_(data), font_(font) {
+namespace {
+    const int invalid = -1;
+}
+
+MenuItem::MenuItem(MenuModelData &data, std::unique_ptr<WrapFont> &font) : data_(data), font_(font), highlight_(false) {
     SDL_Color color = {0x00, 0x00, 0x00, 0xff};
     std::visit([&](const auto &d) {
         surface_ = TTF_RenderText_Blended(font_->font(), d.caption.data(), d.caption.length(), color);
@@ -33,15 +37,36 @@ SDL_Surface *MenuItem::surface() {
     return surface_;
 }
 
-void MenuItem::highlight() {
-    // TODO stub
+bool MenuItem::highlight(int x, int y) {
+    if (x >= 0 && x < width() && y >= 0 && y < height()) {
+        highlight_ = true;
+        return true;
+    }
+    return false;
 }
 
 void MenuItem::unhighlight() {
-    // TODO stub
+    highlight_ = false;
 }
 
-MenuModel::MenuModel(std::vector<MenuModelData> &data, const Rect parent_r, const Rect display_r, std::unique_ptr<WrapFont> &font) : r_(0, 0, 0, 0), height_(display_r.height), scroll_(0), changed_(true) {
+std::optional<std::vector<MenuModelData>> MenuItem::getModel() {
+    if (std::holds_alternative<MenuModelDataSubMenu>(data_)) {
+        Logger::log("Submenu!");
+        return std::make_optional<std::vector<MenuModelData>>(std::get<MenuModelDataSubMenu>(data_).children);
+    }
+    return std::nullopt;
+}
+
+ActionType MenuItem::getAction() {
+    ActionType type = ActionType::None;
+    std::visit([&](auto &x) {
+        type = x.action;
+    }, data_);
+    return type;
+}
+
+MenuModel::MenuModel(std::vector<MenuModelData> &data, const Rect parent_r, const Rect display_r, std::unique_ptr<WrapFont> &font) : r_(0, 0, 0, 0), height_(display_r.height), scroll_(0), changed_(true), index_(invalid) {
+    Logger::log("data.size:", data.size());
     for (auto &v : data) {
         item_list_.push_back(std::make_unique<MenuItem>(v, font));
         auto &last = item_list_.back();
@@ -52,7 +77,12 @@ MenuModel::MenuModel(std::vector<MenuModelData> &data, const Rect parent_r, cons
     }
     r_.x = parent_r.x + parent_r.width;
     if (r_.x + r_.width > display_r.width) {
-        r_.x -= parent_r.x + parent_r.width + r_.width - display_r.width;
+        if (parent_r.x - r_.width > 0 && parent_r.width > 0) {
+            r_.x = parent_r.x - r_.width;
+        }
+        else {
+            r_.x -= parent_r.x + parent_r.width + r_.width - display_r.width;
+        }
     }
     r_.y = parent_r.y;
     if (r_.y + r_.height > display_r.height) {
@@ -69,8 +99,50 @@ MenuModel::MenuModel(std::vector<MenuModelData> &data, const Rect parent_r, cons
 MenuModel::~MenuModel() {
 }
 
-MenuModelData &MenuModel::get(int index) {
-    return item_list_[index]->getModel();
+int MenuModel::getSelectedItemY() {
+    if (index_ == invalid) {
+        return 0;
+    }
+    int height = 0;
+    for (int i = 0; i < index_; i++) {
+        height += item_list_[index_]->height();
+    }
+    return height;
+}
+
+std::optional<std::vector<MenuModelData>> MenuModel::getSubModel() {
+    if (index_ == invalid) {
+        return std::nullopt;
+    }
+    return item_list_[index_]->getModel();
+}
+
+std::optional<ActionType> MenuModel::getAction() {
+    if (index_ == invalid) {
+        return std::nullopt;
+    }
+    return std::make_optional<ActionType>(item_list_[index_]->getAction());
+}
+
+bool MenuModel::highlight(int x, int y) {
+    x -= r_.x;
+    y -= r_.y;
+    for (auto &item : item_list_) {
+        index_++;
+        if (item->highlight(x, y)) {
+            return true;
+        }
+        y -= item->height();
+    }
+    index_ = invalid;
+    return false;
+}
+
+void MenuModel::unhighlight() {
+    index_ = invalid;
+    for (auto &item : item_list_) {
+        item->unhighlight();
+    }
 }
 
 std::unique_ptr<WrapSurface> &MenuModel::getSurface() {
