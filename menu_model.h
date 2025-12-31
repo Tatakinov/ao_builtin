@@ -14,28 +14,33 @@ enum class MenuModelType {
     Action, ActionWithBoolean, ActionWithString, SubMenu
 };
 
+enum class ActionType {
+    None, StayOnTop, Preferences, Switch, Call, Shell, DressUp,
+    Balloon, BasewareVersion, Close, CloseAll,
+};
+
 struct MenuModelDataAction {
-    int action_type;
+    ActionType action;
     bool valid;
-    std::string title;
+    std::string caption;
 };
 
 struct MenuModelDataActionWithBoolean {
-    int action_type;
+    ActionType action;
     bool valid;
-    std::string title;
+    std::string caption;
     bool state;
 };
 
 struct MenuModelDataActionWithString {
-    int action_type;
+    ActionType action;
     bool valid;
-    std::string title;
+    std::string caption;
     std::string arg;
 };
 
 struct MenuModelDataSubMenu {
-    std::string title;
+    std::string caption;
     std::vector<std::variant<MenuModelDataAction, MenuModelDataActionWithString, MenuModelDataActionWithBoolean, MenuModelDataSubMenu>> children;
 };
 

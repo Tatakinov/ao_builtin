@@ -417,9 +417,9 @@ void Ao::draw() {
                     for (auto &[_, v] : characters_) {
                         v->create(event.display.displayID);
                     }
-                }
-                if (menu_) {
-                    menu_->create(event.display.displayID);
+                    if (menu_) {
+                        menu_->create(event.display.displayID);
+                    }
                 }
                 break;
             case SDL_EVENT_DISPLAY_REMOVED:
@@ -427,9 +427,9 @@ void Ao::draw() {
                     for (auto &[_, v] : characters_) {
                         v->destroy(event.display.displayID);
                     }
-                }
-                if (menu_) {
-                    menu_->destroy(event.display.displayID);
+                    if (menu_) {
+                        menu_->destroy(event.display.displayID);
+                    }
                 }
                 break;
             case SDL_EVENT_KEY_DOWN:
@@ -524,6 +524,15 @@ void Ao::draw() {
                 }
             }
         }
+        else if (args[0] == "NotifyMenuInfo" && args.size() == 2) {
+            Json::Reader reader;
+            Json::Value value;
+            reader.parse(args[1], value);
+            auto data = parseMenuInfo(value);
+            if (menu_) {
+                menu_->setMenuModel(data);
+            }
+        }
     }
     std::vector<int> keys;
     for (auto &[k, _] : characters_) {
@@ -543,6 +552,125 @@ void Ao::draw() {
     if (menu_) {
         redrawn_ = menu_->swapBuffers() || redrawn_;
     }
+}
+
+std::vector<MenuModelData> Ao::parseMenuInfo(Json::Value &value) {
+    std::vector<MenuModelData> data;
+    for (int i = 0; !value[i].isNull(); i++) {
+        auto &v = value[i];
+        auto type = v["type"].asString();
+        if (type == "submenu") {
+            MenuModelDataSubMenu submenu = {
+                .caption = v["caption"].asString(),
+                .children = parseMenuInfo(v["list"]),
+            };
+            data.push_back(submenu);
+        }
+        if (type == "check") {
+            MenuModelDataActionWithBoolean check = {
+                .action = ActionType::StayOnTop,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+                .state = v["state"].asBool(),
+            };
+            data.push_back(check);
+        }
+        if (type == "preferences") {
+            MenuModelDataAction action = {
+                .action = ActionType::Preferences,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+            };
+            data.push_back(action);
+        }
+        if (type == "switch") {
+            MenuModelDataActionWithString action = {
+                .action = ActionType::Switch,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+                .arg = v["key"].asString(),
+            };
+            data.push_back(action);
+        }
+        if (type == "call") {
+            MenuModelDataActionWithString action = {
+                .action = ActionType::Call,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+                .arg = v["key"].asString(),
+            };
+            data.push_back(action);
+        }
+        if (type == "shell") {
+            MenuModelDataActionWithString action = {
+                .action = ActionType::Call,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+                .arg = v["key"].asString(),
+            };
+            data.push_back(action);
+        }
+        if (type == "dressup") {
+            MenuModelDataSubMenu dressup = {
+                .caption = v["caption"].asString(),
+                .children = getDressUpList(),
+            };
+            data.push_back(dressup);
+        }
+        if (type == "balloon") {
+            MenuModelDataActionWithString action = {
+                .action = ActionType::Balloon,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+                .arg = v["key"].asString(),
+            };
+            data.push_back(action);
+        }
+        if (type == "basewareversion") {
+            MenuModelDataAction action = {
+                .action = ActionType::BasewareVersion,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+            };
+            data.push_back(action);
+        }
+        if (type == "close") {
+            MenuModelDataAction action = {
+                .action = ActionType::Close,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+            };
+            data.push_back(action);
+        }
+        if (type == "close_all") {
+            MenuModelDataAction action = {
+                .action = ActionType::CloseAll,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+            };
+            data.push_back(action);
+        }
+    }
+    return data;
+}
+
+std::vector<MenuModelData> Ao::getDressUpList() {
+    std::vector<MenuModelData> data;
+    if (!menu_) {
+        return data;
+    }
+    int side = menu_->side();
+    for (auto &[k, _] : bind_id_[side]) {
+        // FIXME clickable
+        MenuModelDataActionWithBoolean action = {
+            .action = ActionType::DressUp,
+            .valid = false,
+            .caption = k,
+            .state = false,
+        };
+        data.push_back(action);
+    }
+    return data;
 }
 
 Rect Ao::getRect(int side) {
@@ -647,6 +775,6 @@ void Ao::enqueueDirectSSTP(std::vector<Request> list) {
     cond_.notify_one();
 }
 
-void Ao::reserveMenuParent(int x, int y) {
-    menu_ = std::make_unique<Menu>(x, y, font_);
+void Ao::reserveMenuParent(int side, int x, int y) {
+    menu_ = std::make_unique<Menu>(side, x, y, font_);
 }

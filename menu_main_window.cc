@@ -14,6 +14,7 @@ MenuMainWindow::~MenuMainWindow() {
 void MenuMainWindow::setMenuModel(std::vector<MenuModelData> &model) {
     Rect r = {base_x_, base_y_, 0, 0};
     model_.push_back(std::make_unique<MenuModel>(model, r, r_, font_));
+    change();
 }
 
 void MenuMainWindow::drawContent() {
@@ -23,6 +24,7 @@ void MenuMainWindow::drawContent() {
         auto r = v->rect();
         SDL_SetRenderTarget(renderer_, nullptr);
         SDL_FRect fr = { r.x, r.y, r.width, r.height };
+        Logger::log("draw.rect:", r.x, r.y, r.width, r.height);
         SDL_RenderTexture(renderer_, t->texture(), nullptr, &fr);
     }
 }
@@ -37,6 +39,7 @@ void MenuMainWindow::button(const SDL_MouseButtonEvent &event) {
     if (event.windowID != SDL_GetWindowID(window_)) {
         return;
     }
+    MenuWindow::button(event);
 }
 
 void MenuMainWindow::wheel(const SDL_MouseWheelEvent &event) {

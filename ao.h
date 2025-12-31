@@ -15,6 +15,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <json/json.h>
+
 #include "character.h"
 #include "font.h"
 #include "image_cache.h"
@@ -99,7 +101,9 @@ class Ao {
 
         void enqueueDirectSSTP(std::vector<Request> list);
 
-        void reserveMenuParent(int x, int y);
+        void reserveMenuParent(int side, int x, int y);
+        std::vector<MenuModelData> parseMenuInfo(Json::Value &value);
+        std::vector<MenuModelData> getDressUpList();
 
         int scale() const {
             return scale_;

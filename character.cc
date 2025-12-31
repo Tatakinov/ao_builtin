@@ -448,7 +448,7 @@ void Character::wheel(const SDL_MouseWheelEvent &event) {
 }
 
 void Character::reserveMenuParent(int x, int y) {
-    parent_->reserveMenuParent(x, y);
+    parent_->reserveMenuParent(side_, x, y);
 }
 
 int Character::scale() const {

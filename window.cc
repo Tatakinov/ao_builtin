@@ -426,8 +426,6 @@ void Window::button(const SDL_MouseButtonEvent &event) {
             Request up = {"NOTIFY", "OnMouseUp", args};
             Request click = {"NOTIFY", "OnMouseClick", args};
             parent_->enqueueDirectSSTP({up, click});
-            // debug code
-            parent_->reserveMenuParent(x, y);
         }
         else {
             Request up = {"NOTIFY", "OnMouseUp", args};
@@ -440,6 +438,7 @@ void Window::button(const SDL_MouseButtonEvent &event) {
 #else
             parent_->enqueueDirectSSTP({up, click});
 #endif
+            parent_->reserveMenuParent(x, y);
         }
     }
     else if (event.down) {

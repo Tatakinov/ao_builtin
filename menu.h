@@ -14,11 +14,15 @@
 class Menu {
     private:
         bool alive_;
+        int side_;
         SDL_DisplayID main_display_;
         std::unordered_map<SDL_DisplayID, std::unique_ptr<MenuWindow>> windows_;
     public:
-        Menu(int x, int y, std::unique_ptr<WrapFont> &font);
+        Menu(int side, int x, int y, std::unique_ptr<WrapFont> &font);
         ~Menu();
+        int side() const {
+            return side_;
+        }
         void create(SDL_DisplayID id);
         void destroy(SDL_DisplayID id);
         void kill();
