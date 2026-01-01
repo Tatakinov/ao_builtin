@@ -37,8 +37,8 @@ SDL_Surface *MenuItem::surface() {
     return surface_;
 }
 
-bool MenuItem::highlight(int x, int y) {
-    if (x >= 0 && x < width() && y >= 0 && y < height()) {
+bool MenuItem::highlight(int y) {
+    if (y >= 0 && y < height()) {
         highlight_ = true;
         return true;
     }
@@ -125,11 +125,15 @@ std::optional<ActionType> MenuModel::getAction() {
 }
 
 bool MenuModel::highlight(int x, int y) {
+    Logger::log("highlight.orig:", x, y);
     x -= r_.x;
     y -= r_.y;
+    if (x < 0 || x > r_.width) {
+        return false;
+    }
     for (auto &item : item_list_) {
         index_++;
-        if (item->highlight(x, y)) {
+        if (item->highlight(y)) {
             return true;
         }
         y -= item->height();

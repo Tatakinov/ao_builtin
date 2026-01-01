@@ -58,7 +58,7 @@ class MenuItem {
         int width() const;
         int height() const;
         SDL_Surface *surface();
-        bool highlight(int x, int y);
+        bool highlight(int y);
         void unhighlight();
 };
 
