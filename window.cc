@@ -153,6 +153,10 @@ void Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
     SDL_RenderClear(renderer_);
     current_texture_ = element.getTexture(renderer_, texture_cache_, image_cache, scale());
     if (current_texture_) {
+        if (!util::isWayland()) {
+            SDL_SetWindowSize(window_, current_texture_->width(), current_texture_->height());
+        }
+        parent_->setSize(current_texture_->width(), current_texture_->height());
         while (adjust_) {
             int side = parent_->side();
             int origin_x = m.x + m.width;
@@ -176,10 +180,6 @@ void Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
 
             adjust_ = false;
         }
-        if (!util::isWayland()) {
-            SDL_SetWindowSize(window_, current_texture_->width(), current_texture_->height());
-        }
-        parent_->setSize(current_texture_->width(), current_texture_->height());
         SDL_SetRenderTarget(renderer_, nullptr);
         SDL_BlendMode mode = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD);
         SDL_SetTextureBlendMode(current_texture_->texture(), mode);
