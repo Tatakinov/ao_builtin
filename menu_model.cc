@@ -51,7 +51,6 @@ void MenuItem::unhighlight() {
 
 std::optional<std::vector<MenuModelData>> MenuItem::getModel() {
     if (std::holds_alternative<MenuModelDataSubMenu>(data_)) {
-        Logger::log("Submenu!");
         return std::make_optional<std::vector<MenuModelData>>(std::get<MenuModelDataSubMenu>(data_).children);
     }
     return std::nullopt;
@@ -66,7 +65,6 @@ ActionType MenuItem::getAction() {
 }
 
 MenuModel::MenuModel(std::vector<MenuModelData> &data, const Rect parent_r, const Rect display_r, std::unique_ptr<WrapFont> &font) : r_(0, 0, 0, 0), height_(display_r.height), scroll_(0), changed_(true), index_(invalid) {
-    Logger::log("data.size:", data.size());
     for (auto &v : data) {
         item_list_.push_back(std::make_unique<MenuItem>(v, font));
         auto &last = item_list_.back();
@@ -91,9 +89,6 @@ MenuModel::MenuModel(std::vector<MenuModelData> &data, const Rect parent_r, cons
     if (r_.y < 0) {
         r_.y = 0;
     }
-    Logger::log("menu.rect: ", r_.x, r_.y, r_.width, r_.height);
-    Logger::log("parent.rect: ", parent_r.x, parent_r.y, parent_r.width, parent_r.height);
-    Logger::log("display.rect: ", display_r.x, display_r.y, display_r.width, display_r.height);
 }
 
 MenuModel::~MenuModel() {
@@ -125,7 +120,6 @@ std::optional<ActionType> MenuModel::getAction() {
 }
 
 bool MenuModel::highlight(int x, int y) {
-    Logger::log("highlight.orig:", x, y);
     x -= r_.x;
     y -= r_.y;
     if (x < 0 || x > r_.width) {

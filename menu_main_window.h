@@ -8,6 +8,8 @@
 #include "menu_model.h"
 #include "menu_window.h"
 
+class Menu;
+
 class MenuMainWindow : public MenuWindow {
     private:
         int base_x_, base_y_;

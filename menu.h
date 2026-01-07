@@ -11,15 +11,18 @@
 #include "menu_window.h"
 #include "menu_main_window.h"
 
+class Ao;
+
 class Menu {
     private:
+        Ao *parent_;
         bool alive_;
         int side_;
         SDL_DisplayID main_display_;
         std::unordered_map<SDL_DisplayID, std::unique_ptr<MenuWindow>> windows_;
         std::vector<MenuModelData> model_;
     public:
-        Menu(int side, int x, int y, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model);
+        Menu(Ao *parent, int side, int x, int y, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model);
         ~Menu();
         int side() const {
             return side_;
@@ -33,6 +36,8 @@ class Menu {
         void wheel(const SDL_MouseWheelEvent &event);
         void draw();
         bool swapBuffers();
+
+        void enqueueDirectSSTP(std::vector<Request> list);
 };
 
 #endif // MENU_H_

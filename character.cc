@@ -448,6 +448,10 @@ void Character::wheel(const SDL_MouseWheelEvent &event) {
 }
 
 void Character::reserveMenuParent(int x, int y) {
+    if (!util::isWayland()) {
+        x += rect_.x;
+        y += rect_.y;
+    }
     parent_->reserveMenuParent(side_, x, y);
 }
 

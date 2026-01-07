@@ -13,7 +13,7 @@
 
 enum class ActionType {
     None, Site, StayOnTop, Preferences, Switch, Call, Shell, DressUp,
-    Balloon, BasewareVersion, Close, CloseAll,
+    Balloon, BasewareVersion, Close, CloseAll, ScriptInputBox,
 };
 
 struct MenuModelDataAction {
@@ -46,7 +46,7 @@ using MenuModelData = std::variant<MenuModelDataAction, MenuModelDataActionWithA
 
 class MenuItem {
     private:
-        MenuModelData &data_;
+        MenuModelData data_;
         std::unique_ptr<WrapFont> &font_;
         SDL_Surface *surface_;
         bool highlight_;

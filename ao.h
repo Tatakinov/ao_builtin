@@ -100,7 +100,7 @@ class Ao {
             return alive_;
         }
 
-        void draw();
+        void run();
 
         std::string sendDirectSSTP(std::string method, std::string command, std::vector<std::string> args);
 

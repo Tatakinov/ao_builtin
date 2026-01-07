@@ -1,9 +1,10 @@
 #include "menu.h"
 
+#include "ao.h"
 #include "logger.h"
 #include "util.h"
 
-Menu::Menu(int side, int x, int y, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model) : alive_(true), side_(side), model_(model) {
+Menu::Menu(Ao *parent, int side, int x, int y, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model) : parent_(parent), alive_(true), side_(side), model_(model) {
     if (util::isWayland() && !getenv("NINIX_ENABLE_MULTI_MONITOR")) {
         main_display_ = util::getCurrentDisplayID();
         SDL_Rect r;
@@ -91,4 +92,8 @@ void Menu::wheel(const SDL_MouseWheelEvent &event) {
     for (auto &[_, v] : windows_) {
         v->wheel(event);
     }
+}
+
+void Menu::enqueueDirectSSTP(std::vector<Request> list) {
+    parent_->enqueueDirectSSTP(list);
 }

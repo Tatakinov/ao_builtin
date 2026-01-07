@@ -405,7 +405,7 @@ void Ao::clearCache() {
     }
 }
 
-void Ao::draw() {
+void Ao::run() {
     SDL_Event event;
     while ((redrawn_) ? (SDL_PollEvent(&event)) : (SDL_WaitEventTimeout(&event, 10))) {
         switch (event.type) {
@@ -529,7 +529,7 @@ void Ao::draw() {
             Json::Value value;
             reader.parse(args[1], value);
             auto data = parseMenuInfo(value);
-            menu_ = std::make_unique<Menu>(menu_init_info_.side, menu_init_info_.x, menu_init_info_.y, font_, data);
+            menu_ = std::make_unique<Menu>(this, menu_init_info_.side, menu_init_info_.x, menu_init_info_.y, font_, data);
         }
     }
     std::vector<int> keys;
@@ -597,6 +597,14 @@ std::vector<MenuModelData> Ao::parseMenuInfo(Json::Value &value) {
         if (type == "preferences") {
             MenuModelDataAction action = {
                 .action = ActionType::Preferences,
+                .valid = v["valid"].asBool(),
+                .caption = v["caption"].asString(),
+            };
+            data.push_back(action);
+        }
+        if (type == "scriptinputbox") {
+            MenuModelDataAction action = {
+                .action = ActionType::ScriptInputBox,
                 .valid = v["valid"].asBool(),
                 .caption = v["caption"].asString(),
             };

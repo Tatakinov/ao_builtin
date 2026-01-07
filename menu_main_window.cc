@@ -1,6 +1,7 @@
 #include "menu_main_window.h"
 
 #include "logger.h"
+#include "menu.h"
 
 MenuMainWindow::MenuMainWindow(Menu *menu, SDL_DisplayID id, int x, int y, std::unique_ptr<WrapFont> &font) : MenuWindow(menu, id), base_x_(x), base_y_(y), font_(font) {
     SDL_Rect r;
@@ -24,7 +25,6 @@ void MenuMainWindow::drawContent() {
         auto r = v->rect();
         SDL_SetRenderTarget(renderer_, nullptr);
         SDL_FRect fr = { r.x, r.y, r.width, r.height };
-        Logger::log("draw.rect:", r.x, r.y, r.width, r.height);
         SDL_RenderTexture(renderer_, t->texture(), nullptr, &fr);
     }
 }
@@ -60,10 +60,30 @@ void MenuMainWindow::button(const SDL_MouseButtonEvent &event) {
         return;
     }
     auto action = model_.back()->getAction();
+    std::vector<std::string> args;
+    Request req = {};
     if (action) {
         switch (action.value()) {
+            case ActionType::None:
+                break;
+            case ActionType::Site:
+            case ActionType::StayOnTop:
+            case ActionType::Preferences:
+            case ActionType::Switch:
+            case ActionType::Call:
+            case ActionType::Shell:
+            case ActionType::DressUp:
+            case ActionType::Balloon:
+            case ActionType::BasewareVersion:
+            case ActionType::Close:
+            case ActionType::CloseAll:
+                break;
+            case ActionType::ScriptInputBox:
+                req = {"EXECUTE", "OpenScriptInputBox", args};
+                parent_->enqueueDirectSSTP({req});
+                break;
             default:
-                // nop
+                assert(false);
                 break;
         }
     }
