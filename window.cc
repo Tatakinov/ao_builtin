@@ -189,9 +189,12 @@ void Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
     if (surface) {
         std::vector<int> shape;
 #if defined(IS__NIX)
-        wl_region *region = wl_compositor_create_region(compositor_);
-        int x_begin = -1;
         bool is_wayland = util::isWayland();
+        int x_begin = -1;
+        wl_region *region = nullptr;
+        if (is_wayland) {
+            region = wl_compositor_create_region(compositor_);
+        }
 #endif // Linux/Unix
         {
             SDL_LockSurface(surface->surface());
