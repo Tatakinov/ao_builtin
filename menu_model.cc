@@ -2,10 +2,6 @@
 
 #include "logger.h"
 
-namespace {
-    const int invalid = -1;
-}
-
 MenuItem::MenuItem(MenuModelData &data, std::unique_ptr<WrapFont> &font) : data_(data), font_(font), highlight_(false) {
     SDL_Color color = {0x00, 0x00, 0x00, 0xff};
     std::visit([&](const auto &d) {
@@ -49,21 +45,6 @@ void MenuItem::unhighlight() {
     highlight_ = false;
 }
 
-std::optional<std::vector<MenuModelData>> MenuItem::getModel() {
-    if (std::holds_alternative<MenuModelDataSubMenu>(data_)) {
-        return std::make_optional<std::vector<MenuModelData>>(std::get<MenuModelDataSubMenu>(data_).children);
-    }
-    return std::nullopt;
-}
-
-ActionType MenuItem::getAction() {
-    ActionType type = ActionType::None;
-    std::visit([&](auto &x) {
-        type = x.action;
-    }, data_);
-    return type;
-}
-
 MenuModel::MenuModel(std::vector<MenuModelData> &data, const Rect parent_r, const Rect display_r, std::unique_ptr<WrapFont> &font) : r_(0, 0, 0, 0), height_(display_r.height), scroll_(0), changed_(true), index_(invalid) {
     for (auto &v : data) {
         item_list_.push_back(std::make_unique<MenuItem>(v, font));
@@ -103,20 +84,6 @@ int MenuModel::getSelectedItemY() {
         height += item_list_[index_]->height();
     }
     return height;
-}
-
-std::optional<std::vector<MenuModelData>> MenuModel::getSubModel() {
-    if (index_ == invalid) {
-        return std::nullopt;
-    }
-    return item_list_[index_]->getModel();
-}
-
-std::optional<ActionType> MenuModel::getAction() {
-    if (index_ == invalid) {
-        return std::nullopt;
-    }
-    return std::make_optional<ActionType>(item_list_[index_]->getAction());
 }
 
 bool MenuModel::highlight(int x, int y) {

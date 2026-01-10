@@ -46,11 +46,11 @@ void MenuMainWindow::motion(const SDL_MouseMotionEvent &event) {
     if (depth > 0 && depth < model_.size()) {
         model_.erase(std::next(model_.begin(), depth), model_.end());
     }
-    auto submenu = model_.back()->getSubModel();
+    auto submenu = model_.back()->get<MenuModelDataSubMenu>();
     if (submenu) {
         auto r = model_.back()->rect();
         r.y += model_.back()->getSelectedItemY();
-        model_.push_back(std::make_unique<MenuModel>(submenu.value(), r, r_, font_));
+        model_.push_back(std::make_unique<MenuModel>(submenu.value().children, r, r_, font_));
     }
     change();
 }
@@ -60,34 +60,66 @@ void MenuMainWindow::button(const SDL_MouseButtonEvent &event) {
         return;
     }
     auto action = model_.back()->getAction();
-    std::vector<std::string> args;
-    Request req = {};
-    if (action) {
-        switch (action.value()) {
-            case ActionType::None:
-                break;
-            case ActionType::Site:
-            case ActionType::StayOnTop:
-            case ActionType::Preferences:
-            case ActionType::Switch:
-            case ActionType::Call:
-            case ActionType::Shell:
-            case ActionType::DressUp:
-            case ActionType::Balloon:
-            case ActionType::BasewareVersion:
-            case ActionType::Close:
-            case ActionType::CloseAll:
-                break;
-            case ActionType::ScriptInputBox:
-                req = {"EXECUTE", "OpenScriptInputBox", args};
-                parent_->enqueueDirectSSTP({req});
-                break;
-            default:
-                assert(false);
-                break;
+    if (action == ActionType::None) {
+        return;
+    }
+    else if (action == ActionType::Site) {
+        auto data = model_.back()->get<MenuModelDataActionWithArgs>();
+        if (data && data->args.size() > 0) {
+            std::vector<std::string> args;
+            args.push_back(data->args[0]);
+            if (data->args.size() >= 3) {
+                args.push_back(data->args[2]);
+            }
+            parent_->enqueueDirectSSTP({{"EXECUTE", "VisitSite", {data->args[0]}}});
         }
     }
-    MenuWindow::button(event);
+    else if (action == ActionType::StayOnTop) {
+        // TODO stub
+    }
+    else if (action == ActionType::Preferences) {
+        parent_->enqueueDirectSSTP({{"EXECUTE", "OpenPreferences", {}}});
+    }
+    else if (action == ActionType::Switch) {
+        auto data = model_.back()->get<MenuModelDataActionWithArgs>();
+        if (data && data->args.size() > 0) {
+            parent_->enqueueDirectSSTP({{"EXECUTE", "ChangeGhost", {data->args[0]}}});
+        }
+    }
+    else if (action == ActionType::Call) {
+        auto data = model_.back()->get<MenuModelDataActionWithArgs>();
+        if (data && data->args.size() > 0) {
+            parent_->enqueueDirectSSTP({{"EXECUTE", "SummonGhost", {data->args[0]}}});
+        }
+    }
+    else if (action == ActionType::Shell) {
+        auto data = model_.back()->get<MenuModelDataActionWithArgs>();
+        if (data && data->args.size() > 0) {
+            parent_->enqueueDirectSSTP({{"EXECUTE", "ChangeShell", {data->args[0]}}});
+        }
+    }
+    else if (action == ActionType::DressUp) {
+        // TODO stub
+    }
+    else if (action == ActionType::Balloon) {
+        auto data = model_.back()->get<MenuModelDataActionWithArgs>();
+        if (data && data->args.size() > 0) {
+            parent_->enqueueDirectSSTP({{"EXECUTE", "ChangeBalloon", {data->args[0]}}});
+        }
+    }
+    else if (action == ActionType::BasewareVersion) {
+        parent_->enqueueDirectSSTP({{"EXECUTE", "ShowBasewareVersion", {}}});
+    }
+    else if (action == ActionType::Close) {
+        parent_->enqueueDirectSSTP({{"EXECUTE", "CloseGhost", {}}});
+    }
+    else if (action == ActionType::CloseAll) {
+        parent_->enqueueDirectSSTP({{"EXECUTE", "CloseAllGhost", {}}});
+    }
+    else if (action == ActionType::ScriptInputBox) {
+        parent_->enqueueDirectSSTP({{"EXECUTE", "OpenScriptInputBox", {}}});
+    }
+    parent_->kill();
 }
 
 void MenuMainWindow::wheel(const SDL_MouseWheelEvent &event) {

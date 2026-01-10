@@ -11,6 +11,10 @@
 #include "misc.h"
 #include "texture.h"
 
+namespace {
+    const int invalid = -1;
+}
+
 enum class ActionType {
     None, Site, StayOnTop, Preferences, Switch, Call, Shell, DressUp,
     Balloon, BasewareVersion, Close, CloseAll, ScriptInputBox,
@@ -54,7 +58,20 @@ class MenuItem {
         MenuItem(MenuModelData &data, std::unique_ptr<WrapFont> &font);
         ~MenuItem();
         std::optional<std::vector<MenuModelData>> getModel();
-        ActionType getAction();
+        template <typename T>
+            std::optional<T> get() {
+                if (std::holds_alternative<T>(data_)) {
+                    return std::get<T>(data_);
+                }
+                return std::nullopt;
+            }
+        ActionType getAction() const {
+            ActionType type = ActionType::None;
+            std::visit([&](const auto &x) {
+                type = x.action;
+            }, data_);
+            return type;
+        }
         int width() const;
         int height() const;
         SDL_Surface *surface();
@@ -75,8 +92,19 @@ class MenuModel {
         MenuModel(std::vector<MenuModelData> &data, const Rect parent_r, const Rect display_r, std::unique_ptr<WrapFont> &font);
         ~MenuModel();
         int getSelectedItemY();
-        std::optional<std::vector<MenuModelData>> getSubModel();
-        std::optional<ActionType> getAction();
+        template <typename T>
+            std::optional<T> get() {
+                if (index_ == invalid) {
+                    return std::nullopt;
+                }
+                return item_list_[index_]->get<T>();
+            }
+        ActionType getAction() const {
+            if (index_ == invalid) {
+                return ActionType::None;
+            }
+            return item_list_[index_]->getAction();
+        }
         Rect rect() {
             return r_;
         }

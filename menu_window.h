@@ -27,7 +27,6 @@ class MenuWindow {
         virtual void motion(const SDL_MouseMotionEvent &event);
         virtual void button(const SDL_MouseButtonEvent &event);
         virtual void wheel(const SDL_MouseWheelEvent &event);
-        void kill();
         void change();
 };
 
