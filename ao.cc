@@ -98,10 +98,6 @@ bool Ao::init() {
                 loaded_ = true;
                 cond_.notify_one();
             }
-            else if (event == "Description") {
-                {
-                }
-            }
             else if (event == "Position" && req(0)) {
                 int side;
                 std::istringstream iss(req(0).value());
@@ -120,13 +116,6 @@ bool Ao::init() {
                 res(0) = r.width;
                 res(1) = r.height;
             }
-            else if (event == "SetBalloonOffset" && req(0) && req(1) && req(2)) {
-                int side, x = 0, y = 0;
-                util::to_x(req(0).value(), side);
-                util::to_x(req(1).value(), x);
-                util::to_x(req(2).value(), y);
-                setBalloonOffset(side, x, y);
-            }
             else if (event == "GetBalloonOffset" && req(0)) {
                 int side;
                 std::istringstream iss(req(0).value());
@@ -136,12 +125,6 @@ bool Ao::init() {
                 res(0) = static_cast<int>(offset.x);
                 res(1) = static_cast<int>(offset.y);
             }
-            else if (event == "StartAnimation" && req(0) && req(1)) {
-                int side, id;
-                util::to_x(req(0).value(), side);
-                util::to_x(req(1).value(), id);
-                startAnimation(side, id);
-            }
             else if (event == "IsPlayingAnimation" && req(0) && req(1)) {
                 int side, id;
                 util::to_x(req(0).value(), side);
@@ -149,29 +132,6 @@ bool Ao::init() {
                 res = {200, "OK"};
                 bool playing = isPlayingAnimation(side, id);
                 res(0) = static_cast<int>(playing);
-            }
-            else if (event == "Bind" && req(0) && req(1) && req(2) && req(3) && req(4)) {
-                int side;
-                BindFlag flag = BindFlag::Toggle;
-                auto arg = req(4).value();
-                if (arg == "true") {
-                    flag = BindFlag::True;
-                }
-                else if (arg == "false") {
-                    flag = BindFlag::False;
-                }
-                util::to_x(req(0).value(), side);
-                do {
-                    auto key = req(1).value() + "," + req(2).value();
-                    if (!bind_id_.contains(side)) {
-                        break;
-                    }
-                    if (!bind_id_.at(side).contains(key)) {
-                        break;
-                    }
-                    int id = bind_id_.at(side).at(key);
-                    bind(side, id, req(3).value(), flag);
-                } while (false);
             }
             else {
                 std::vector<std::string> args;
@@ -530,6 +490,42 @@ void Ao::run() {
             reader.parse(args[1], value);
             auto data = parseMenuInfo(value);
             menu_ = std::make_unique<Menu>(this, menu_init_info_.side, menu_init_info_.x, menu_init_info_.y, font_, data);
+        }
+        else if (args[0] == "SetBalloonOffset" && args.size() == 4) {
+            int side, x = 0, y = 0;
+            util::to_x(args[1], side);
+            util::to_x(args[2], x);
+            util::to_x(args[3], y);
+            setBalloonOffset(side, x, y);
+        }
+        else if (args[0] == "StartAnimation" && args.size() == 3) {
+            int side, id;
+            util::to_x(args[1], side);
+            util::to_x(args[2], id);
+            startAnimation(side, id);
+        }
+        else if (args[0] == "Bind" && args.size() == 6) {
+            int side;
+            BindFlag flag = BindFlag::Toggle;
+            auto arg = args[5];
+            if (arg == "true") {
+                flag = BindFlag::True;
+            }
+            else if (arg == "false") {
+                flag = BindFlag::False;
+            }
+            util::to_x(args[1], side);
+            do {
+                auto key = args[2] + "," + args[3];
+                if (!bind_id_.contains(side)) {
+                    break;
+                }
+                if (!bind_id_.at(side).contains(key)) {
+                    break;
+                }
+                int id = bind_id_.at(side).at(key);
+                bind(side, id, args[4], flag);
+            } while (false);
         }
     }
     std::vector<int> keys;
