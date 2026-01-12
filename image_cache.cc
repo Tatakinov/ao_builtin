@@ -76,7 +76,7 @@ ImageCache::ImageCache(const std::filesystem::path &exe_dir, bool use_self_alpha
                     SDL_Surface *in = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_ABGR8888, dest.data(), w * 4);
                     SDL_Surface *out = SDL_CreateSurface(w_resize, h_resize, SDL_PIXELFORMAT_ABGR8888);
                     SDL_ClearSurface(out, 0, 0, 0, 0);
-                    SDL_BlitSurface(in, nullptr, out, nullptr);
+                    SDL_BlitSurfaceScaled(in, nullptr, out, nullptr, SDL_SCALEMODE_LINEAR);
                     SDL_LockSurface(out);
                     memcpy(resize.data(), out->pixels, sizeof(unsigned char) * w_resize * h_resize * 4);
                     SDL_UnlockSurface(out);
@@ -271,10 +271,10 @@ std::optional<ImageInfo> &ImageCache::get(const std::filesystem::path &path) {
     std::vector<unsigned char> resize;
     resize.resize(w * h * 4);
 
-    SDL_Surface *in = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_ABGR8888, info->get().data(), w * 4);
+    SDL_Surface *in = SDL_CreateSurfaceFrom(info->width(), info->height(), SDL_PIXELFORMAT_ABGR8888, info->get().data(), info->width() * 4);
     SDL_Surface *out = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_ABGR8888);
     SDL_ClearSurface(out, 0, 0, 0, 0);
-    SDL_BlitSurface(in, nullptr, out, nullptr);
+    SDL_BlitSurfaceScaled(in, nullptr, out, nullptr, SDL_SCALEMODE_LINEAR);
     SDL_LockSurface(out);
     memcpy(resize.data(), out->pixels, sizeof(unsigned char) * w * h * 4);
     SDL_UnlockSurface(out);
