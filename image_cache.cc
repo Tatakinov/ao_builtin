@@ -1,12 +1,12 @@
 #include "image_cache.h"
 
 #include <cassert>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include <stb_image_resize2.h>
+#include <cmath>
+
+#include <SDL3_image/SDL_image.h>
 
 #include "logger.h"
+#include "texture.h"
 
 #if defined(USE_ONNX)
 ImageCache::ImageCache(const std::filesystem::path &exe_dir, bool use_self_alpha)
@@ -72,7 +72,17 @@ ImageCache::ImageCache(const std::filesystem::path &exe_dir, bool use_self_alpha
                     int h_resize = std::round(info->height() * scale_ / 100.0);
                     std::vector<unsigned char> resize;
                     resize.resize(w_resize * h_resize * 4);
-                    stbir_resize_uint8_linear(dest.data(), w, h, 0, resize.data(), w_resize, h_resize, 0, STBIR_RGBA);
+
+                    SDL_Surface *in = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_ABGR8888, dest.data(), w * 4);
+                    SDL_Surface *out = SDL_CreateSurface(w_resize, h_resize, SDL_PIXELFORMAT_ABGR8888);
+                    SDL_ClearSurface(out, 0, 0, 0, 0);
+                    SDL_BlitSurface(in, nullptr, out, nullptr);
+                    SDL_LockSurface(out);
+                    memcpy(resize.data(), out->pixels, sizeof(unsigned char) * w_resize * h_resize * 4);
+                    SDL_UnlockSurface(out);
+                    SDL_DestroySurface(in);
+                    SDL_DestroySurface(out);
+
                     dest = resize;
                     w = w_resize;
                     h = h_resize;
@@ -113,18 +123,22 @@ void ImageCache::setScale(int scale) {
 
 std::optional<ImageInfo> &ImageCache::getOriginal(const std::filesystem::path &path) {
     Logger::log("scale => ", scale_);
+    Logger::log("file: ", path.string());
     if (cache_orig_.contains(path)) {
         return cache_orig_.at(path);
     }
-    unsigned char *p;
-    int w, h, _bpp;
-    p = stbi_load(path.string().c_str(), &w, &h, &_bpp, 4);
-    if (p == nullptr) {
+    SDL_Surface *in = IMG_Load(path.string().c_str());
+    if (in == nullptr) {
         cache_orig_[path] = std::nullopt;
         return cache_orig_.at(path);
     }
+    SDL_Surface *abgr = SDL_ConvertSurface(in, SDL_PIXELFORMAT_ABGR8888);
+    SDL_DestroySurface(in);
+    int w = abgr->w, h = abgr->h;
     std::vector<unsigned char> data;
     data.resize(w * h * 4);
+    SDL_LockSurface(abgr);
+    unsigned char *p = static_cast<unsigned char *>(abgr->pixels);
     for (int i = 0; i < w * h; i++) {
         // alpha: 0なら全て0にする
         if (p[4 * i + 3] == 0) {
@@ -140,18 +154,23 @@ std::optional<ImageInfo> &ImageCache::getOriginal(const std::filesystem::path &p
             data[4 * i + 3] = p[4 * i + 3];
         }
     }
-    stbi_image_free(p);
+    SDL_UnlockSurface(abgr);
+    SDL_DestroySurface(abgr);
     if (!use_self_alpha_) {
         auto pna_filename = path.parent_path() / path.stem();
         pna_filename += ".pna";
-        unsigned char *pna;
-        int w_pna, h_pna, _bpp_pna;
-        pna = stbi_load(pna_filename.string().c_str(), &w_pna, &h_pna, &_bpp_pna, 4);
-        if (pna != nullptr && w == w_pna && h == h_pna) {
+        SDL_Surface *pna_in = IMG_Load(pna_filename.string().c_str());
+        if (pna_in != nullptr && w == pna_in->w && h == pna_in->h) {
+            SDL_Surface *pna_abgr = SDL_ConvertSurface(pna_in, SDL_PIXELFORMAT_ABGR8888);
+            SDL_DestroySurface(pna_in);
+            SDL_LockSurface(pna_abgr);
+            unsigned char *pna = static_cast<unsigned char *>(pna_abgr->pixels);
             for (int i = 0; i < w * h; i++) {
                 int alpha = pna[4 * i];
                 data[4 * i + 3] = alpha;
             }
+            SDL_UnlockSurface(pna_abgr);
+            SDL_DestroySurface(pna_abgr);
         }
         else {
             int r = data[0 + 0];
@@ -165,9 +184,6 @@ std::optional<ImageInfo> &ImageCache::getOriginal(const std::filesystem::path &p
                     data[4 * i + 3] = 0;
                 }
             }
-        }
-        if (pna != nullptr) {
-            stbi_image_free(pna);
         }
     }
     // そのままだとalphaが0とそうでない部分の境界で
@@ -254,7 +270,17 @@ std::optional<ImageInfo> &ImageCache::get(const std::filesystem::path &path) {
     int h = std::round(info->height() * scale_ / 100.0);
     std::vector<unsigned char> resize;
     resize.resize(w * h * 4);
-    stbir_resize_uint8_linear(info->get().data(), info->width(), info->height(), 0, resize.data(), w, h, 0, STBIR_RGBA);
+
+    SDL_Surface *in = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_ABGR8888, info->get().data(), w * 4);
+    SDL_Surface *out = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_ABGR8888);
+    SDL_ClearSurface(out, 0, 0, 0, 0);
+    SDL_BlitSurface(in, nullptr, out, nullptr);
+    SDL_LockSurface(out);
+    memcpy(resize.data(), out->pixels, sizeof(unsigned char) * w * h * 4);
+    SDL_UnlockSurface(out);
+    SDL_DestroySurface(in);
+    SDL_DestroySurface(out);
+
     if (scale_ <= 100 || !th_) {
         cache_[path] = {resize, w, h, true};
     }
