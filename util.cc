@@ -242,6 +242,7 @@ namespace util {
     }
 
     SDL_DisplayID getCurrentDisplayID() {
+#if defined(IS__NIX)
         if (!isWayland()) {
             return 0;
         }
@@ -329,5 +330,8 @@ namespace util {
 
         Logger::log("display: ", id);
         return id;
+#else
+        return 0;
+#endif // Linux/Unix
     }
 }
