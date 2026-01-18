@@ -458,7 +458,7 @@ void Ao::run() {
             iss >> side;
             show(side);
         }
-        else if (args[0] == "Surface") {
+        else if (args[0] == "SetSurfaceID") {
             int side, id;
             util::to_x(args[1], side);
             util::to_x(args[2], id);
