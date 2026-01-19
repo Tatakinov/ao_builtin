@@ -98,40 +98,13 @@ bool Ao::init() {
                 loaded_ = true;
                 cond_.notify_one();
             }
-            else if (event == "Position" && req(0)) {
-                int side;
-                std::istringstream iss(req(0).value());
-                iss >> side;
-                res = {200, "OK"};
-                Rect r = getRect(side);
-                res(0) = r.x;
-                res(1) = r.y;
-            }
-            else if (event == "Size" && req(0)) {
-                int side;
-                std::istringstream iss(req(0).value());
-                iss >> side;
-                res = {200, "OK"};
-                Rect r = getRect(side);
-                res(0) = r.width;
-                res(1) = r.height;
-            }
-            else if (event == "GetBalloonOffset" && req(0)) {
-                int side;
-                std::istringstream iss(req(0).value());
-                iss >> side;
-                res = {200, "OK"};
-                auto offset = getBalloonOffset(side);
-                res(0) = static_cast<int>(offset.x);
-                res(1) = static_cast<int>(offset.y);
-            }
             else if (event == "IsPlayingAnimation" && req(0) && req(1)) {
                 int side, id;
                 util::to_x(req(0).value(), side);
                 util::to_x(req(1).value(), id);
                 res = {200, "OK"};
                 bool playing = isPlayingAnimation(side, id);
-                res(0) = static_cast<int>(playing);
+                res() = static_cast<int>(playing);
             }
             else {
                 std::vector<std::string> args;
@@ -493,13 +466,6 @@ void Ao::run() {
             auto data = parseMenuInfo(value);
             menu_ = std::make_unique<Menu>(this, menu_init_info_.side, menu_init_info_.x, menu_init_info_.y, font_, data);
         }
-        else if (args[0] == "SetBalloonOffset" && args.size() == 4) {
-            int side, x = 0, y = 0;
-            util::to_x(args[1], side);
-            util::to_x(args[2], x);
-            util::to_x(args[3], y);
-            setBalloonOffset(side, x, y);
-        }
         else if (args[0] == "StartAnimation" && args.size() == 3) {
             int side, id;
             util::to_x(args[1], side);
@@ -698,13 +664,6 @@ std::vector<MenuModelData> Ao::getDressUpList() {
     return data;
 }
 
-Rect Ao::getRect(int side) {
-    if (!characters_.contains(side)) {
-        return {0, 0, 0, 0};
-    }
-    return characters_.at(side)->getRect();
-}
-
 std::optional<Offset> Ao::getCharacterOffset(int side) {
     int s = side;
     std::optional<Offset> ret = std::nullopt;
@@ -720,20 +679,6 @@ std::optional<Offset> Ao::getCharacterOffset(int side) {
         ret = characters_.at(s)->getOffset();
     }
     return ret;
-}
-
-void Ao::setBalloonOffset(int side, int x, int y) {
-    if (!characters_.contains(side)) {
-        return;
-    }
-    return characters_.at(side)->setBalloonOffset(x, y);
-}
-
-Offset Ao::getBalloonOffset(int side) {
-    if (!characters_.contains(side)) {
-        return {0, 0};
-    }
-    return characters_.at(side)->getBalloonOffset();
 }
 
 std::string Ao::sendDirectSSTP(std::string method, std::string command, std::vector<std::string> args) {

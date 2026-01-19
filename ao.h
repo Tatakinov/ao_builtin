@@ -75,11 +75,6 @@ class Ao {
 
         void create(int side);
 
-        Rect getRect(int side);
-
-        void setBalloonOffset(int side, int x, int y);
-        Offset getBalloonOffset(int side);
-
         std::optional<Offset> getCharacterOffset(int side);
 
         void show(int side);
