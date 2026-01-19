@@ -235,13 +235,7 @@ void Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
             else
 #endif // Linux/Unix
             {
-                int w, h;
-                SDL_GetWindowSize(window_, &w, &h);
-                auto s = std::make_unique<WrapSurface>(w, h);
-                SDL_ClearSurface(s->surface(), 0, 0, 0, 0);
-                SDL_Rect r = { offset.x - m.x, offset.y - m.y, surface->width(), surface->height() };
-                SDL_BlitSurface(surface->surface(), nullptr, s->surface(), &r);
-                SDL_SetWindowShape(window_, s->surface());
+                SDL_SetWindowShape(window_, surface->surface());
             }
             shape_ = shape;
         }
