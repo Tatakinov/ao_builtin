@@ -495,6 +495,11 @@ void Ao::run() {
                 bind(side, id, args[4], flag);
             } while (false);
         }
+        else if (args[0] == "ScriptBegin") {
+            raise();
+        }
+        else if (args[0] == "ScriptEnd") {
+        }
     }
     std::vector<int> keys;
     for (auto &[k, _] : characters_) {
@@ -513,6 +518,12 @@ void Ao::run() {
     }
     if (menu_) {
         redrawn_ = menu_->swapBuffers() || redrawn_;
+    }
+}
+
+void Ao::raise() {
+    for (auto &[_, v] : characters_) {
+        v->raise();
     }
 }
 

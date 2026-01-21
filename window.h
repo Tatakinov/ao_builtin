@@ -113,6 +113,7 @@ class Window {
 
         void clearCache();
 
+        void raise();
         void key(const SDL_KeyboardEvent &event);
         void motion(const SDL_MouseMotionEvent &event);
         void button(const SDL_MouseButtonEvent &event);

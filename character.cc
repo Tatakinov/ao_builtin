@@ -423,6 +423,12 @@ void Character::setCursor(CursorType type) {
     }
 }
 
+void Character::raise() {
+    for (auto &[_, v] : windows_) {
+        v->raise();
+    }
+}
+
 void Character::key(const SDL_KeyboardEvent &event) {
     for (auto &[_, v] : windows_) {
         v->key(event);

@@ -81,6 +81,8 @@ class Ao {
 
         void hide(int side);
 
+        void raise();
+
         void setSurface(int side, int id);
 
         void startAnimation(int side, int id);

@@ -310,6 +310,10 @@ void Window::clearCache() {
     texture_cache_->clear();
 }
 
+void Window::raise() {
+    SDL_RaiseWindow(window_);
+}
+
 void Window::key(const SDL_KeyboardEvent &event) {
     if (event.windowID != SDL_GetWindowID(window_)) {
         return;
