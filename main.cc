@@ -13,7 +13,7 @@
 
 int main(int argc, char **argv) {
     SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
-    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "io.github.tatakinov.ninix-kagari.ao_builtin");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "io.github.tatakinov.ninix-kagari.ao.ao_builtin");
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         return 1;
     }
