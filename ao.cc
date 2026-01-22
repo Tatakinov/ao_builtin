@@ -466,11 +466,17 @@ void Ao::run() {
             auto data = parseMenuInfo(value);
             menu_ = std::make_unique<Menu>(this, menu_init_info_.side, menu_init_info_.x, menu_init_info_.y, font_, data);
         }
-        else if (args[0] == "StartAnimation" && args.size() == 3) {
-            int side, id;
+        else if (args[0] == "InvokeAnimation" && args.size() >= 4) {
+            int side, id, x = 0, y = 0;
             util::to_x(args[1], side);
             util::to_x(args[2], id);
-            startAnimation(side, id);
+            if (args.size() == 6) {
+                util::to_x(args[4], x);
+                util::to_x(args[5], y);
+            }
+            if (args[3] == "start") {
+                startAnimation(side, id);
+            }
         }
         else if (args[0] == "Bind" && args.size() == 6) {
             int side;
