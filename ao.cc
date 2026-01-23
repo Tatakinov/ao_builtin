@@ -737,6 +737,7 @@ std::string Ao::sendDirectSSTP(std::string method, std::string command, std::vec
         closesocket(soc);
         return res;
     }
+    shutdown(soc, SHUT_WR);
     char buffer[BUFFER_SIZE] = {};
     std::string data;
     while (true) {
