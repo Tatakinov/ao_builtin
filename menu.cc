@@ -24,6 +24,8 @@ Menu::Menu(Ao *parent, int side, int x, int y, std::unique_ptr<WrapFont> &font, 
             alive_ = false;
             return;
         }
+        windows_[main_display_] = std::make_unique<MenuMainWindow>(this, main_display_, x - r.x, y - r.y, font);
+#if 0
         int count;
         auto *displays = SDL_GetDisplays(&count);
         for (int i = 0; i < count; i++) {
@@ -35,6 +37,7 @@ Menu::Menu(Ao *parent, int side, int x, int y, std::unique_ptr<WrapFont> &font, 
             }
         }
         SDL_free(displays);
+#endif
     }
     windows_.at(main_display_)->setMenuModel(model_);
 }

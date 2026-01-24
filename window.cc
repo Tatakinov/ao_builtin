@@ -118,6 +118,9 @@ Window::~Window() {
         if (reg_ != nullptr) {
             wl_registry_destroy(reg_);
         }
+        if (compositor_ != nullptr) {
+            wl_compositor_destroy(compositor_);
+        }
     }
 #endif // Linux/Unix
 }
