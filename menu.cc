@@ -97,6 +97,12 @@ void Menu::wheel(const SDL_MouseWheelEvent &event) {
     }
 }
 
+void Menu::focus(bool focus) {
+    for (auto &[_, v] : windows_) {
+        v->focus(focus);
+    }
+}
+
 void Menu::enqueueDirectSSTP(std::vector<Request> list) {
     parent_->enqueueDirectSSTP(list);
 }

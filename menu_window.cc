@@ -5,7 +5,7 @@
 #include "logger.h"
 #include "menu.h"
 
-MenuWindow::MenuWindow(Menu *menu, SDL_DisplayID id): changed_(true), parent_(menu) {
+MenuWindow::MenuWindow(Menu *menu, SDL_DisplayID id): changed_(true), focus_(false), parent_(menu) {
     SDL_Rect r;
     SDL_GetDisplayBounds(id, &r);
     SDL_PropertiesID p = SDL_CreateProperties();
@@ -67,6 +67,14 @@ void MenuWindow::button(const SDL_MouseButtonEvent &event) {
 
 void MenuWindow::wheel(const SDL_MouseWheelEvent &event) {
     // nop
+}
+
+void MenuWindow::focus(bool focus) {
+    // kill if focus lost after focus gained
+    if (focus_ && !focus) {
+        parent_->kill();
+    }
+    focus_ = focus;
 }
 
 void MenuWindow::change() {

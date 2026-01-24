@@ -13,6 +13,7 @@ class Menu;
 class MenuWindow {
     private:
         bool changed_;
+        bool focus_;
     protected:
         Menu *parent_;
         SDL_Window *window_;
@@ -27,6 +28,7 @@ class MenuWindow {
         virtual void motion(const SDL_MouseMotionEvent &event);
         virtual void button(const SDL_MouseButtonEvent &event);
         virtual void wheel(const SDL_MouseWheelEvent &event);
+        void focus(bool focus);
         void change();
 };
 

@@ -401,6 +401,16 @@ void Ao::run() {
                 break;
             case SDL_EVENT_DROP_FILE:
                 break;
+            case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                if (menu_) {
+                    menu_->focus(true);
+                }
+                break;
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+                if (menu_) {
+                    menu_->focus(false);
+                }
+                break;
             default:
                 break;
         }
