@@ -308,8 +308,10 @@ std::unordered_set<int> Character::getBindAddId(int id) {
 }
 
 std::string Character::getHitBoxName(int x, int y) {
-    x -= rect_.x;
-    y -= rect_.y;
+    if (util::isWayland()) {
+        x -= rect_.x;
+        y -= rect_.y;
+    }
     // TODO scale
     auto list = seriko_->getCollision(id_);
     for (auto &info : list) {
