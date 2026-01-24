@@ -417,9 +417,13 @@ void Window::button(const SDL_MouseButtonEvent &event) {
         auto name = parent_->getHitBoxName(x, y);
 
         std::vector<std::string> args;
-        Offset offset = parent_->getOffset();
-        int surface_x = x - offset.x;
-        int surface_y = y - offset.y;
+        int surface_x = x;
+        int surface_y = y;
+        if (util::isWayland()) {
+            Offset offset = parent_->getOffset();
+            surface_x -= offset.x;
+            surface_y -= offset.y;
+        }
         args = {util::to_s(surface_x), util::to_s(surface_y), util::to_s(0), util::to_s(parent_->side()), name, util::to_s(b)};
 
         if (event.clicks % 2 == 0) {
@@ -467,13 +471,13 @@ void Window::button(const SDL_MouseButtonEvent &event) {
             auto r = getMonitorRect();
             x = x + r.x;
             y = y + r.y;
+            Offset offset = parent_->getOffset();
+            x = x - offset.x;
+            y = y - offset.y;
         }
         auto name = parent_->getHitBoxName(x, y);
 
         std::vector<std::string> args;
-        Offset offset = parent_->getOffset();
-        x = x - offset.x;
-        y = y - offset.y;
         args = {util::to_s(x), util::to_s(y), util::to_s(0), util::to_s(parent_->side()), name, util::to_s(b)};
         Request req = {"NOTIFY", "OnMouseDown", args};
         parent_->enqueueDirectSSTP({req});
