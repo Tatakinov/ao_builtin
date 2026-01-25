@@ -512,10 +512,10 @@ void Ao::run() {
                 bind(side, id, args[4], flag);
             } while (false);
         }
-        else if (args[0] == "ScriptBegin") {
+        else if (args[0] == "OnScriptBegin") {
             raise();
         }
-        else if (args[0] == "ScriptEnd") {
+        else if (args[0] == "OnScriptEnd") {
         }
     }
     std::vector<int> keys;
