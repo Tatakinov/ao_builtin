@@ -75,7 +75,7 @@ class Window {
         void position(int x, int y);
         void focus(int focused);
 
-        void draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool use_self_alpha);
+        void draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool changed);
         bool swapBuffers();
 
         void setPosition(int x, int y) {

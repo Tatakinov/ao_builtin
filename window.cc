@@ -145,8 +145,8 @@ void Window::position(int x, int y) {
     }
 }
 
-void Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool use_self_alpha) {
-    if (current_element_ == element && offset_ == offset && current_texture_ && current_texture_->isUpconverted()) {
+void Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::unique_ptr<WrapSurface> &surface, const ElementWithChildren &element, const bool changed) {
+    if (current_element_ == element && offset_ == offset && current_texture_ && current_texture_->isUpconverted() && !changed) {
         redrawn_ = false;
         return;
     }

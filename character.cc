@@ -44,7 +44,6 @@ void dump(const ElementWithChildren &e, std::string indent = "") {
 
 
 void Character::draw(std::unique_ptr<ImageCache> &cache, bool changed) {
-    bool use_self_alpha = (parent_->getInfo("seriko.use_self_alpha", false) == "1");
     auto element = seriko_->get(id_);
     if (changed) {
         upconverted_ = false;
@@ -58,10 +57,10 @@ void Character::draw(std::unique_ptr<ImageCache> &cache, bool changed) {
     bool upconverted = true;
     for (auto &[_, v] : windows_) {
         if (util::isWayland()) {
-            v->draw(cache, {rect_.x, rect_.y}, current_surface_, element, use_self_alpha);
+            v->draw(cache, {rect_.x, rect_.y}, current_surface_, element, changed);
         }
         else {
-            v->draw(cache, {0, 0}, current_surface_, element, use_self_alpha);
+            v->draw(cache, {0, 0}, current_surface_, element, changed);
         }
     }
 }
