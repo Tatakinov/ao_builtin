@@ -415,8 +415,6 @@ void Window::button(const SDL_MouseButtonEvent &event) {
             y = y + r.y;
         }
         auto name = parent_->getHitBoxName(x, y);
-
-        std::vector<std::string> args;
         int surface_x = x;
         int surface_y = y;
         if (util::isWayland()) {
@@ -424,6 +422,8 @@ void Window::button(const SDL_MouseButtonEvent &event) {
             surface_x -= offset.x;
             surface_y -= offset.y;
         }
+
+        std::vector<std::string> args;
         args = {util::to_s(surface_x), util::to_s(surface_y), util::to_s(0), util::to_s(parent_->side()), name, util::to_s(b)};
 
         if (event.clicks % 2 == 0) {
@@ -471,11 +471,13 @@ void Window::button(const SDL_MouseButtonEvent &event) {
             auto r = getMonitorRect();
             x = x + r.x;
             y = y + r.y;
+        }
+        auto name = parent_->getHitBoxName(x, y);
+        if (util::isWayland()) {
             Offset offset = parent_->getOffset();
             x = x - offset.x;
             y = y - offset.y;
         }
-        auto name = parent_->getHitBoxName(x, y);
 
         std::vector<std::string> args;
         args = {util::to_s(x), util::to_s(y), util::to_s(0), util::to_s(parent_->side()), name, util::to_s(b)};
