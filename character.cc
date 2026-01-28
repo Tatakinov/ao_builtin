@@ -311,7 +311,8 @@ std::string Character::getHitBoxName(int x, int y) {
         x -= rect_.x;
         y -= rect_.y;
     }
-    // TODO scale
+    x = x * 100.0 / scale();
+    y = y * 100.0 / scale();
     auto list = seriko_->getCollision(id_);
     for (auto &info : list) {
         for (auto &c : info.list) {
