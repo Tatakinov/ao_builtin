@@ -200,22 +200,31 @@ void Character::resetDrag() {
         align = f(value);
     }
 
-    SDL_DisplayID id = 0;
-    if (util::isWayland()) {
-        double distance = -1;
-        for (auto &[k, v] : windows_) {
-            double d = v->distance(rect_.x, rect_.y);
-            if (d < distance || distance == -1) {
-                distance = d;
-                id = k;
-            }
+    SDL_Rect r;
+    if (util::isWayland() && !getenv("NINIX_ENABLE_MULTI_MONITOR")) {
+        Rect rect;
+        for (auto &[_, v] : windows_) {
+            rect = v->getMonitorRect();
         }
+        r = {rect.x, rect.y, rect.width, rect.height};
     }
     else {
-        id = util::getNearestDisplay(rect_.x, rect_.y);
+        SDL_DisplayID id = 0;
+        if (util::isWayland()) {
+            double distance = -1;
+            for (auto &[k, v] : windows_) {
+                double d = v->distance(rect_.x, rect_.y);
+                if (d < distance || distance == -1) {
+                    distance = d;
+                    id = k;
+                }
+            }
+        }
+        else {
+            id = util::getNearestDisplay(rect_.x, rect_.y);
+        }
+        SDL_GetDisplayBounds(id, &r);
     }
-    SDL_Rect r;
-    SDL_GetDisplayBounds(id, &r);
     switch (align) {
         case Alignment::Bottom:
             setOffset(rect_.x, r.y + r.h - rect_.height);
@@ -244,11 +253,18 @@ void Character::setOffset(int x, int y) {
             rect_.x = x;
             rect_.y = y;
         }
-        auto id = util::getNearestDisplay(rect_.x, rect_.y);
         SDL_Rect r;
-        Logger::log(SDL_GetError());
-        SDL_GetDisplayBounds(id, &r);
-        Logger::log(SDL_GetError());
+        if (util::isWayland() && !getenv("NINIX_ENABLE_MULTI_MONITOR")) {
+            Rect rect;
+            for (auto &[_, v] : windows_) {
+                rect = v->getMonitorRect();
+            }
+            r = {rect.x, rect.y, rect.width, rect.height};
+        }
+        else {
+            auto id = util::getNearestDisplay(rect_.x, rect_.y);
+            SDL_GetDisplayBounds(id, &r);
+        }
         Logger::log("monitor_rect:", r.x,",", r.y,",", r.w, ",",r.h);
         std::vector<std::string> args = {util::to_s(side_), util::to_s(r.x), util::to_s(r.y), util::to_s(r.w), util::to_s(r.h)};
         Request req = {"EXECUTE", "UpdateMonitorRect", args};
@@ -452,6 +468,12 @@ void Character::button(const SDL_MouseButtonEvent &event) {
 void Character::wheel(const SDL_MouseWheelEvent &event) {
     for (auto &[_, v] : windows_) {
         v->wheel(event);
+    }
+}
+
+void Character::maximized(const SDL_WindowEvent &event) {
+    for (auto &[_, v] : windows_) {
+        v->maximized(event);
     }
 }
 

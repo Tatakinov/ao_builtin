@@ -282,10 +282,6 @@ void Ao::create(int side) {
         }
         SDL_free(monitors);
     }
-    else if (util::isWayland()) {
-        SDL_DisplayID id = util::getCurrentDisplayID();
-        characters_.at(side)->create(id);
-    }
     else {
         characters_.at(side)->create(0);
     }
@@ -409,6 +405,11 @@ void Ao::run() {
             case SDL_EVENT_WINDOW_FOCUS_LOST:
                 if (menu_) {
                     menu_->focus(false);
+                }
+                break;
+            case SDL_EVENT_WINDOW_MAXIMIZED:
+                for (auto &[_, v] : characters_) {
+                    v->maximized(event.window);
                 }
                 break;
             default:

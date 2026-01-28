@@ -52,6 +52,7 @@ class Window {
         ElementWithChildren current_element_;
         std::unique_ptr<WrapTexture> current_texture_;
         bool redrawn_;
+        bool changed_;
 #if defined(IS__NIX)
         wl_registry *reg_;
         wl_compositor *compositor_;
@@ -118,6 +119,7 @@ class Window {
         void motion(const SDL_MouseMotionEvent &event);
         void button(const SDL_MouseButtonEvent &event);
         void wheel(const SDL_MouseWheelEvent &event);
+        void maximized(const SDL_WindowEvent &event);
         int scale() const;
 };
 
