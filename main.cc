@@ -14,6 +14,7 @@
 int main(int argc, char **argv) {
     SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
     SDL_SetHint("SDL_BORDERLESS_WINDOWED_STYLE", "0");
+    SDL_SetHint(SDL_HINT_APP_ID, "io.github.tatakinov.ninix-kagari.ao.ao_builtin");
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "io.github.tatakinov.ninix-kagari.ao.ao_builtin");
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         return 1;
