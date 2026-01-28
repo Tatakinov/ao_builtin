@@ -141,6 +141,7 @@ void Window::draw(std::unique_ptr<ImageCache> &image_cache, Offset offset, std::
         redrawn_ = false;
         return;
     }
+    changed_ = false;
     auto m = getMonitorRect();
     SDL_SetRenderTarget(renderer_, nullptr);
     SDL_SetRenderDrawColor(renderer_, 0x00, 0x00, 0x00, 0x00);
