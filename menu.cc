@@ -5,40 +5,28 @@
 #include "util.h"
 
 Menu::Menu(Ao *parent, int side, int x, int y, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model) : parent_(parent), alive_(true), side_(side), model_(model) {
-    if (util::isWayland() && !getenv("NINIX_ENABLE_MULTI_MONITOR")) {
-        main_display_ = util::getCurrentDisplayID();
-        SDL_Rect r;
-        SDL_GetDisplayBounds(main_display_, &r);
-        if (x < r.x || x > r.x + r.w || y < r.y || y > r.y + r.h) {
-            Logger::log("invalid rect");
-            alive_ = false;
-            return;
-        }
-        windows_[main_display_] = std::make_unique<MenuMainWindow>(this, main_display_, x - r.x, y - r.y, font);
+    main_display_ = util::getNearestDisplay(x, y);
+    SDL_Rect r;
+    SDL_GetDisplayBounds(main_display_, &r);
+    if (x < r.x || x > r.x + r.w || y < r.y || y > r.y + r.h) {
+        alive_ = false;
+        Logger::log("invalid rect", x, y);
+        return;
     }
-    else {
-        main_display_ = util::getNearestDisplay(x, y);
-        SDL_Rect r;
-        SDL_GetDisplayBounds(main_display_, &r);
-        if (x < r.x || x > r.x + r.w || y < r.y || y > r.y + r.h) {
-            alive_ = false;
-            return;
-        }
-        windows_[main_display_] = std::make_unique<MenuMainWindow>(this, main_display_, x - r.x, y - r.y, font);
+    windows_[main_display_] = std::make_unique<MenuMainWindow>(this, main_display_, x - r.x, y - r.y, font);
 #if 0
-        int count;
-        auto *displays = SDL_GetDisplays(&count);
-        for (int i = 0; i < count; i++) {
-            if (main_display_ == displays[i]) {
-                windows_[displays[i]] = std::make_unique<MenuMainWindow>(this, displays[i], x - r.x, y - r.y, font);
-            }
-            else {
-                windows_[displays[i]] = std::make_unique<MenuWindow>(this, displays[i]);
-            }
+    int count;
+    auto *displays = SDL_GetDisplays(&count);
+    for (int i = 0; i < count; i++) {
+        if (main_display_ == displays[i]) {
+            windows_[displays[i]] = std::make_unique<MenuMainWindow>(this, displays[i], x - r.x, y - r.y, font);
         }
-        SDL_free(displays);
-#endif
+        else {
+            windows_[displays[i]] = std::make_unique<MenuWindow>(this, displays[i]);
+        }
     }
+    SDL_free(displays);
+#endif
     windows_.at(main_display_)->setMenuModel(model_);
 }
 
