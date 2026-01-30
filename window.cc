@@ -454,7 +454,19 @@ void Window::button(const SDL_MouseButtonEvent &event) {
 #else
             parent_->enqueueDirectSSTP({up, click});
 #endif
-            parent_->reserveMenuParent(x, y);
+            int w, h;
+            if (util::isWayland()) {
+                w = monitor_rect_.width;
+                h = monitor_rect_.height;
+            }
+            else {
+                auto id = util::getNearestDisplay(x, y);
+                SDL_Rect r;
+                SDL_GetDisplayBounds(id, &r);
+                w = r.w;
+                h = r.h;
+            }
+            parent_->reserveMenuParent(x, y, w, h);
         }
     }
     else if (event.down) {

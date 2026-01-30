@@ -477,12 +477,12 @@ void Character::maximized(const SDL_WindowEvent &event) {
     }
 }
 
-void Character::reserveMenuParent(int x, int y) {
+void Character::reserveMenuParent(int x, int y, int w, int h) {
     if (!util::isWayland()) {
         x += rect_.x;
         y += rect_.y;
     }
-    parent_->reserveMenuParent(side_, x, y);
+    parent_->reserveMenuParent(side_, x, y, w, h);
 }
 
 int Character::scale() const {

@@ -102,7 +102,7 @@ class Character {
         void button(const SDL_MouseButtonEvent &event);
         void wheel(const SDL_MouseWheelEvent &event);
         void maximized(const SDL_WindowEvent &event);
-        void reserveMenuParent(int x, int y);
+        void reserveMenuParent(int x, int y, int w, int h);
         int scale() const;
 };
 

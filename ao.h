@@ -30,7 +30,7 @@ class Character;
 class Surfaces;
 
 struct MenuInitInfo {
-    int side, x, y;
+    int side, x, y, w, h;
 };
 
 class Ao {
@@ -103,7 +103,7 @@ class Ao {
 
         void enqueueDirectSSTP(std::vector<Request> list);
 
-        void reserveMenuParent(int side, int x, int y);
+        void reserveMenuParent(int side, int x, int y, int w, int h);
         std::vector<MenuModelData> parseMenuInfo(Json::Value &value);
         std::vector<MenuModelData> getDressUpList();
 
