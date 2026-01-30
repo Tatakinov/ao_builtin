@@ -123,6 +123,14 @@ namespace util {
         return (SDL_GetCurrentVideoDriver() != nullptr && wayland == SDL_GetCurrentVideoDriver());
     }
 
+    bool isX11() {
+        std::string wayland = "wayland";
+        // XDG_SESSION_TYPEはx11だったりttyだったりnullだったりするので
+        // waylandでない、という条件にした。
+        // また、XWaylandはWayland扱いとした。
+        return (getenv("XDG_SESSION_TYPE") && wayland != getenv("XDG_SESSION_TYPE"));
+    }
+
     SDL_DisplayID getNearestDisplay(int x, int y) {
         SDL_DisplayID id = 0;
         int count = 0;

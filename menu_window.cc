@@ -4,10 +4,9 @@
 
 #include "logger.h"
 #include "menu.h"
+#include "util.h"
 
-MenuWindow::MenuWindow(Menu *menu, SDL_DisplayID id): changed_(true), focus_(false), parent_(menu) {
-    SDL_Rect r;
-    SDL_GetDisplayBounds(id, &r);
+MenuWindow::MenuWindow(Menu *menu, SDL_DisplayID id, int w, int h): changed_(true), focus_(false), parent_(menu) {
     SDL_PropertiesID p = SDL_CreateProperties();
     assert(p);
     SDL_SetStringProperty(p, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "Menu");
@@ -15,8 +14,8 @@ MenuWindow::MenuWindow(Menu *menu, SDL_DisplayID id): changed_(true), focus_(fal
     SDL_SetBooleanProperty(p, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
     SDL_SetNumberProperty(p, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_UNDEFINED_DISPLAY(id));
     SDL_SetNumberProperty(p, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_UNDEFINED_DISPLAY(id));
-    SDL_SetNumberProperty(p, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, r.w);
-    SDL_SetNumberProperty(p, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, r.h);
+    SDL_SetNumberProperty(p, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, w);
+    SDL_SetNumberProperty(p, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, h);
     window_ = SDL_CreateWindowWithProperties(p);
     renderer_ = SDL_CreateRenderer(window_, nullptr);
     SDL_SetRenderVSync(renderer_, 1);
@@ -72,9 +71,15 @@ void MenuWindow::wheel(const SDL_MouseWheelEvent &event) {
 void MenuWindow::focus(bool focus) {
     // kill if focus lost after focus gained
     if (focus_ && !focus) {
-        parent_->kill();
+        if (!util::isX11()) {
+            parent_->kill();
+        }
     }
     focus_ = focus;
+}
+
+bool MenuWindow::focused() const {
+    return focus_;
 }
 
 void MenuWindow::change() {

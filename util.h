@@ -29,6 +29,7 @@ namespace util {
     std::string side2str(int side);
 
     bool isWayland();
+    bool isX11();
 
     SDL_DisplayID getNearestDisplay(int x, int y);
 

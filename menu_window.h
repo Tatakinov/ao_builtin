@@ -19,7 +19,7 @@ class MenuWindow {
         SDL_Window *window_;
         SDL_Renderer *renderer_;
     public:
-        MenuWindow(Menu *menu, SDL_DisplayID id);
+        MenuWindow(Menu *menu, SDL_DisplayID id, int w, int h);
         virtual ~MenuWindow();
         void draw();
         virtual void setMenuModel(std::vector<MenuModelData> &model);
@@ -29,6 +29,7 @@ class MenuWindow {
         virtual void button(const SDL_MouseButtonEvent &event);
         virtual void wheel(const SDL_MouseWheelEvent &event);
         void focus(bool focus);
+        bool focused() const;
         void change();
 };
 
