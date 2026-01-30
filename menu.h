@@ -19,22 +19,21 @@ class Menu {
         bool alive_;
         int side_;
         SDL_DisplayID main_display_;
-        std::unordered_map<SDL_DisplayID, std::unique_ptr<MenuWindow>> windows_;
+        std::unique_ptr<MenuWindow> window_;
         std::vector<MenuModelData> model_;
     public:
-        Menu(Ao *parent, int side, int x, int y, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model);
+        Menu(Ao *parent, int side, int x, int y, int w, int h, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model);
         ~Menu();
         int side() const {
             return side_;
         }
-        void create(SDL_DisplayID id);
-        void destroy(SDL_DisplayID id);
         void kill();
         bool alive() const;
         void motion(const SDL_MouseMotionEvent &event);
         void button(const SDL_MouseButtonEvent &event);
         void wheel(const SDL_MouseWheelEvent &event);
         void focus(bool focus);
+        bool focused() const;
         void draw();
         bool swapBuffers();
 

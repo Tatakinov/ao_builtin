@@ -4,10 +4,12 @@
 #include "menu.h"
 #include "util.h"
 
-MenuMainWindow::MenuMainWindow(Menu *menu, SDL_DisplayID id, int x, int y, std::unique_ptr<WrapFont> &font) : MenuWindow(menu, id), base_x_(x), base_y_(y), font_(font) {
-    SDL_Rect r;
-    SDL_GetDisplayBounds(id, &r);
-    r_ = {r.x, r.y, r.w, r.h};
+namespace {
+    const int _unused = 0;
+}
+
+MenuMainWindow::MenuMainWindow(Menu *menu, SDL_DisplayID id, int x, int y, int w, int h, std::unique_ptr<WrapFont> &font) : MenuWindow(menu, id, w, h), base_x_(x), base_y_(y), font_(font) {
+    r_ = {_unused, _unused, w, h};
 #if defined(IS__NIX)
     if (util::isWayland()) {
         const wl_registry_listener listener = {

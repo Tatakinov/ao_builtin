@@ -349,18 +349,12 @@ void Ao::run() {
                     for (auto &[_, v] : characters_) {
                         v->create(event.display.displayID);
                     }
-                    if (menu_) {
-                        menu_->create(event.display.displayID);
-                    }
                 }
                 break;
             case SDL_EVENT_DISPLAY_REMOVED:
                 if (util::isWayland() && getenv("NINIX_ENABLE_MULTI_MONITOR")) {
                     for (auto &[_, v] : characters_) {
                         v->destroy(event.display.displayID);
-                    }
-                    if (menu_) {
-                        menu_->destroy(event.display.displayID);
                     }
                 }
                 break;
@@ -415,6 +409,9 @@ void Ao::run() {
             default:
                 break;
         }
+    }
+    if (util::isX11() && menu_ && !menu_->focused()) {
+        menu_->kill();
     }
     if (menu_ && !menu_->alive()) {
         menu_.reset();
@@ -476,7 +473,7 @@ void Ao::run() {
             Json::Value value;
             reader.parse(args[1], value);
             auto data = parseMenuInfo(value);
-            menu_ = std::make_unique<Menu>(this, menu_init_info_.side, menu_init_info_.x, menu_init_info_.y, font_, data);
+            menu_ = std::make_unique<Menu>(this, menu_init_info_.side, menu_init_info_.x, menu_init_info_.y, menu_init_info_.w, menu_init_info_.h, font_, data);
         }
         else if (args[0] == "InvokeAnimation" && args.size() >= 4) {
             int side, id, x = 0, y = 0;
@@ -775,6 +772,6 @@ void Ao::enqueueDirectSSTP(std::vector<Request> list) {
     cond_.notify_one();
 }
 
-void Ao::reserveMenuParent(int side, int x, int y) {
-    menu_init_info_ = {side, x, y};
+void Ao::reserveMenuParent(int side, int x, int y, int w, int h) {
+    menu_init_info_ = {side, x, y, w, h};
 }

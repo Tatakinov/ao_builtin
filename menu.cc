@@ -4,34 +4,22 @@
 #include "logger.h"
 #include "util.h"
 
-Menu::Menu(Ao *parent, int side, int x, int y, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model) : parent_(parent), alive_(true), side_(side), model_(model) {
-    main_display_ = util::getNearestDisplay(x, y);
-    SDL_Rect r;
-    SDL_GetDisplayBounds(main_display_, &r);
-    if (x < r.x || x > r.x + r.w || y < r.y || y > r.y + r.h) {
-        alive_ = false;
-        Logger::log("invalid rect", x, y);
-        return;
+Menu::Menu(Ao *parent, int side, int x, int y, int w, int h, std::unique_ptr<WrapFont> &font, std::vector<MenuModelData> &model) : parent_(parent), alive_(true), side_(side), model_(model) {
+    auto id = util::getNearestDisplay(x, y);
+    if (!util::isWayland()) {
+        SDL_Rect r;
+        SDL_GetDisplayBounds(id, &r);
+        x -= r.x;
+        y -= r.y;
+        w = r.w;
+        h = r.h;
     }
-    windows_[main_display_] = std::make_unique<MenuMainWindow>(this, main_display_, x - r.x, y - r.y, font);
-#if 0
-    int count;
-    auto *displays = SDL_GetDisplays(&count);
-    for (int i = 0; i < count; i++) {
-        if (main_display_ == displays[i]) {
-            windows_[displays[i]] = std::make_unique<MenuMainWindow>(this, displays[i], x - r.x, y - r.y, font);
-        }
-        else {
-            windows_[displays[i]] = std::make_unique<MenuWindow>(this, displays[i]);
-        }
-    }
-    SDL_free(displays);
-#endif
-    windows_.at(main_display_)->setMenuModel(model_);
+    window_ = std::make_unique<MenuMainWindow>(this, id, x, y, w, h, font);
+    window_->setMenuModel(model_);
 }
 
 Menu::~Menu() {
-    windows_.clear();
+    window_.reset();
 }
 
 void Menu::kill() {
@@ -42,53 +30,32 @@ bool Menu::alive() const {
     return alive_;
 }
 
-void Menu::create(SDL_DisplayID id) {
-    windows_[id] = std::make_unique<MenuWindow>(this, id);
-}
-
-void Menu::destroy(SDL_DisplayID id) {
-    if (id == main_display_) {
-        alive_ = false;
-    }
-    windows_.erase(id);
-}
-
 void Menu::draw() {
-    for (auto &[_, v] : windows_) {
-        v->draw();
-    }
+    window_->draw();
 }
 
 bool Menu::swapBuffers() {
-    bool redrawn = false;
-    for (auto &[_, v] : windows_) {
-        redrawn = v->swapBuffers() || redrawn;
-    }
-    return redrawn;
+    return window_->swapBuffers();
 }
 
 void Menu::motion(const SDL_MouseMotionEvent &event) {
-    for (auto &[_, v] : windows_) {
-        v->motion(event);
-    }
+    window_->motion(event);
 }
 
 void Menu::button(const SDL_MouseButtonEvent &event) {
-    for (auto &[_, v] : windows_) {
-        v->button(event);
-    }
+    window_->button(event);
 }
 
 void Menu::wheel(const SDL_MouseWheelEvent &event) {
-    for (auto &[_, v] : windows_) {
-        v->wheel(event);
-    }
+    window_->wheel(event);
 }
 
 void Menu::focus(bool focus) {
-    for (auto &[_, v] : windows_) {
-        v->focus(focus);
-    }
+    window_->focus(focus);
+}
+
+bool Menu::focused() const {
+    return window_->focused();
 }
 
 void Menu::enqueueDirectSSTP(std::vector<Request> list) {

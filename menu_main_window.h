@@ -27,7 +27,7 @@ class MenuMainWindow : public MenuWindow {
         wl_compositor *compositor_;
 #endif // Linux/Unix
     public:
-        MenuMainWindow(Menu *menu, SDL_DisplayID id, int x, int y, std::unique_ptr<WrapFont> &font);
+        MenuMainWindow(Menu *menu, SDL_DisplayID id, int x, int y, int w, int h, std::unique_ptr<WrapFont> &font);
         ~MenuMainWindow();
         void setMenuModel(std::vector<MenuModelData> &model) override;
         void drawContent() override;
