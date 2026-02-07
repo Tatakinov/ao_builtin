@@ -17,7 +17,7 @@ ImageCache::ImageCache(const std::filesystem::path &exe_dir, bool use_self_alpha
         session_ = {env_, model_path.string().c_str(), session_options};
         th_ = std::make_unique<std::thread>([&]() {
             while (true) {
-                std::filesystem::path p;
+                ImagePath p;
                 int scale;
                 {
                     std::unique_lock<std::mutex> lock(mutex_);
@@ -27,7 +27,7 @@ ImageCache::ImageCache(const std::filesystem::path &exe_dir, bool use_self_alpha
                     scale = scale_;
                 }
                 int num_resize = std::ceil(std::log2(scale_ / 100.0));
-                auto &info = cache_orig_.at(p);
+                auto &info = cache_orig_.at(p.path, p.index);
                 int w = info->width();
                 int h = info->height();
                 std::vector<unsigned char> src;
@@ -108,7 +108,7 @@ ImageCache::~ImageCache() {
     if (th_) {
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            queue_.push("");
+            queue_.push({"", std::nullopt});
             cond_.notify_one();
         }
         th_->join();
@@ -121,19 +121,8 @@ void ImageCache::setScale(int scale) {
     cache_.clear();
 }
 
-std::optional<ImageInfo> &ImageCache::getOriginal(const std::filesystem::path &path) {
-    Logger::log("scale => ", scale_);
-    Logger::log("file: ", path.string());
-    if (cache_orig_.contains(path)) {
-        return cache_orig_.at(path);
-    }
-    SDL_Surface *in = IMG_Load(path.string().c_str());
-    if (in == nullptr) {
-        cache_orig_[path] = std::nullopt;
-        return cache_orig_.at(path);
-    }
+std::optional<ImageInfo> ImageCache::load(const ImagePath &path, SDL_Surface *in) {
     SDL_Surface *abgr = SDL_ConvertSurface(in, SDL_PIXELFORMAT_ABGR8888);
-    SDL_DestroySurface(in);
     int w = abgr->w, h = abgr->h;
     std::vector<unsigned char> data;
     data.resize(w * h * 4);
@@ -156,8 +145,8 @@ std::optional<ImageInfo> &ImageCache::getOriginal(const std::filesystem::path &p
     }
     SDL_UnlockSurface(abgr);
     SDL_DestroySurface(abgr);
-    if (!use_self_alpha_) {
-        auto pna_filename = path.parent_path() / path.stem();
+    if (!use_self_alpha_ && !path.index.has_value()) {
+        auto pna_filename = path.path.parent_path() / path.path.stem();
         pna_filename += ".pna";
         SDL_Surface *pna_in = IMG_Load(pna_filename.string().c_str());
         if (pna_in != nullptr && w == pna_in->w && h == pna_in->h) {
@@ -250,21 +239,55 @@ std::optional<ImageInfo> &ImageCache::getOriginal(const std::filesystem::path &p
             }
         }
     }
-    cache_orig_[path] = {data, w, h, true};
-    return cache_orig_.at(path);
+    return std::make_optional<ImageInfo>(data, w, h, true);
 }
 
-std::optional<ImageInfo> &ImageCache::get(const std::filesystem::path &path) {
-    {
-        std::unique_lock<std::mutex> lock(mutex_);
-        if (cache_.contains(path)) {
-            return cache_.at(path);
+std::optional<ImageInfo> &ImageCache::getOriginal(const std::filesystem::path &path, const std::optional<int> &index) {
+    Logger::log("scale => ", scale_);
+    Logger::log("file: ", path.string());
+    ImagePath key = {path, index};
+    if (cache_orig_.contains(key)) {
+        return cache_orig_.at(key);
+    }
+    if (index.has_value()) {
+        Logger::log("load animation!", path);
+        IMG_Animation *anim = IMG_LoadAnimation(path.string().c_str());
+        if (anim == nullptr) {
+            cache_orig_[key] = std::nullopt;
+        }
+        else {
+            for (int i = 0; i < anim->count; i++) {
+                ImagePath k = {path, i};
+                cache_orig_[k] = load(k, anim->frames[i]);
+            }
+            IMG_FreeAnimation(anim);
         }
     }
-    auto &info = getOriginal(path);
+    else {
+        SDL_Surface *in = IMG_Load(path.string().c_str());
+        if (in == nullptr) {
+            cache_orig_[key] = std::nullopt;
+        }
+        else {
+            cache_orig_[key] = load(key, in);
+            SDL_DestroySurface(in);
+        }
+    }
+    return cache_orig_.at(key);
+}
+
+std::optional<ImageInfo> &ImageCache::get(const std::filesystem::path &path, const std::optional<int> index) {
+    ImagePath key = {path, index};
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        if (cache_.contains(key)) {
+            return cache_.at(key);
+        }
+    }
+    auto &info = getOriginal(path, index);
     if (info == std::nullopt || scale_ == 100) {
-        cache_[path] = info;
-        return cache_.at(path);
+        cache_[key] = info;
+        return cache_.at(key);
     }
     int w = std::round(info->width() * scale_ / 100.0);
     int h = std::round(info->height() * scale_ / 100.0);
@@ -282,18 +305,18 @@ std::optional<ImageInfo> &ImageCache::get(const std::filesystem::path &path) {
     SDL_DestroySurface(out);
 
     if (scale_ <= 100 || !th_) {
-        cache_[path] = {resize, w, h, true};
+        cache_[key] = {resize, w, h, true};
     }
     else {
-        cache_[path] = {resize, w, h, false};
+        cache_[key] = {resize, w, h, false};
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            queue_.push(path);
+            queue_.push(key);
         }
         cond_.notify_one();
     }
 
-    return cache_.at(path);
+    return cache_.at(key);
 }
 
 void ImageCache::clearCache() {

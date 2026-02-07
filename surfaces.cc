@@ -7,6 +7,8 @@
 #include <optional>
 #include <unordered_map>
 
+#include <SDL3_image/SDL_image.h>
+
 #include "logger.h"
 #include "util.h"
 
@@ -66,6 +68,7 @@ namespace {
         {"alternativestop", Method::AlternativeStop},
         {"parallelstart", Method::ParallelStart},
         {"parallelstop", Method::ParallelStop},
+        {"import", Method::Import},
     };
     const std::unordered_map<std::string, Method> s2method_synthesize = {
         {"base", Method::Base},
@@ -93,6 +96,13 @@ namespace {
         {"polygon", CollisionType::Polygon},
         {"region", CollisionType::Region}
     };
+
+    struct ImportInfo {
+        int offset;
+        std::vector<int> delays;
+    };
+
+    std::unordered_map<std::filesystem::path, ImportInfo> path2import_info;
 }
 
 void parseSurfaceID(const std::string &line, std::unordered_set<int> &inclusive, std::unordered_set<int> & exclusive) {
@@ -167,6 +177,45 @@ Surfaces::Surfaces(const std::filesystem::path &ayu_dir) {
     std::sort(list.begin(), list.end(), std::less<std::filesystem::path>());
     for (auto &p : list) {
         parse(p);
+    }
+}
+
+void Surfaces::importAnimatedSurface(const std::filesystem::path &path) {
+    if (path2import_info.contains(path)) {
+        return;
+    }
+    IMG_Animation *anim = IMG_LoadAnimation(path.string().c_str());
+    if (anim == nullptr) {
+        return;
+    }
+    int max = 2;
+    for (auto &[_, v] : path2import_info) {
+        int size = v.offset + v.delays.size();
+        max = std::max(max, size);
+    }
+    std::vector<int> delays;
+    Logger::log("surfaces.import:", anim->count);
+    delays.reserve(anim->count);
+    for (int i = 0; i < anim->count; i++) {
+        delays.push_back(anim->delays[i]);
+    }
+    path2import_info[path] = {
+        .offset = max,
+        .delays = delays,
+    };
+    IMG_FreeAnimation(anim);
+    for (int i = 0; i < delays.size(); i++) {
+        surfaces_[-(max + i)] = {
+            .element = {
+                {0, {
+                        .method = Method::Base,
+                        .x = 0, .y = 0,
+                        .filename = path,
+                        .index = i,
+                    }
+                },
+            },
+        };
     }
 }
 
@@ -310,6 +359,7 @@ void Surfaces::parse(const std::filesystem::path &path) {
                         int n;
                         util::to_x(tmp.substr(7), n);
                         Pattern p;
+                        p.index = n;
                         std::getline(l, tmp, ',');
                         if (surface->animation[id].interval.size() == 1 && surface->animation[id].interval.contains(Interval::Bind) && !s2method_synthesize.contains(tmp)) {
                             Logger::log("Error(", line_count, "): invalid method in bind");
@@ -375,16 +425,56 @@ void Surfaces::parse(const std::filesystem::path &path) {
                             }
                             p.wait_min = p.wait_max = 0;
                         }
+                        else if (p.method == Method::Import) {
+                            std::filesystem::path filename;
+                            int wait, x, y;
+                            std::getline(l, tmp, ',');
+                            std::u8string u(tmp.begin(), tmp.end());
+                            filename = shell_dir / u;
+                            importAnimatedSurface(filename);
+                            if (!path2import_info.contains(filename)) {
+                                Logger::log("failed to import:", filename);
+                                continue;
+                            }
+                            auto &info = path2import_info.at(filename);
+                            // TODO wait-minmax
+                            std::getline(l, tmp, ',');
+                            util::to_x(tmp, wait);
+                            std::getline(l, tmp, ',');
+                            util::to_x(tmp, x);
+                            std::getline(l, tmp, ',');
+                            util::to_x(tmp, y);
+                            for (int i = 0; i < info.delays.size(); i++) {
+                                Logger::log("surfaces.import", i);
+                                surface->animation[id].pattern.push_back({
+                                    .index = n,
+                                    .id = -(info.offset + i),
+                                    .wait_min = wait,
+                                    .wait_max = wait,
+                                    .x = x,
+                                    .y = y,
+                                });
+                                wait = info.delays[i];
+                            }
+                            // Pattern pはpush_backしない
+                            continue;
+                        }
                         else {
                             // unreachable
                             assert(false);
                         }
+                        // TODO index
                         if (surface->animation[id].pattern.size() > n) {
                             surface->animation[id].pattern[n] = p;
                         }
                         else {
                             while (surface->animation[id].pattern.size() < n) {
-                                surface->animation[id].pattern.push_back({Method::Overlay, -1, 0, 0, 0, 0, {}});
+                                surface->animation[id].pattern.push_back({
+                                    .method = Method::Overlay,
+                                    .index = -1,
+                                    .id = -1,
+                                    .wait_min = 0, .wait_max = 0,
+                                    .x = 0, .y = 0, .ids = {}});
                             }
                             surface->animation[id].pattern.push_back(p);
                         }
@@ -486,11 +576,13 @@ void Surfaces::dump() const {
     for (auto &[k, v] : surfaces_) {
         Logger::log("surface: ", k);
         for (auto &[k, e] : v.element) {
-            Logger::log("  element", k);
+            Logger::log("  element", k, e.filename);
         }
         for (auto &[k, a] : v.animation) {
             Logger::log("  animation: ", k);
-            Logger::log("    pattern: " , a.pattern.size());
+            for (auto &p : a.pattern) {
+                Logger::log("    pattern:", p.id);
+            }
         }
         for (auto &[k, c] : v.collision) {
             Logger::log("  collision: ", k);

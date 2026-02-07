@@ -68,13 +68,23 @@ void Seriko::inactivate(int id) {
 
 ElementWithChildren Seriko::get(int id) {
     if (!surfaces_.contains(id)) {
-        return {Method::Overlay, 0, 0, {}};
+        return {
+            .method = Method::Overlay,
+            .x = 0, .y = 0, .children = {}
+        };
     }
-    ElementWithChildren ret = {Method::Overlay, 0, 0, {}};
+    ElementWithChildren ret = {
+        .method = Method::Overlay,
+        .x = 0, .y = 0, .children = {}
+    };
     if (current_id_ != id) {
         current_id_ = id;
         if (!surfaces_.contains(id)) {
-            return {Method::Overlay, 0, 0, {}};
+            return {
+                .method = Method::Overlay,
+                .x = 0, .y = 0,
+                .children = {}
+            };
         }
         auto &surface = surfaces_.at(id);
         actors_.clear();
@@ -125,7 +135,7 @@ ElementWithChildren Seriko::get(int id) {
         else if (actor.active()) {
             auto p = actor.currentPattern();
             ElementWithChildren e = { p.method, p.x, p.y, getElements(p.id, done) };
-            ret.emplace_back(e);
+            ret.children.emplace_back(e);
         }
 #else
         auto p = actor.currentPattern();
@@ -271,7 +281,7 @@ void Seriko::updateBind() {
     for (auto &[k, _] : actors_) {
         if (!binds_.contains(k)) {
             binds_[k] = parent_->isBinding(k);
-            Logger::log("updateBind: ", k);
+            Logger::log("updateBind: ", k, binds_[k]);
             assert(binds_.contains(k));
             bind(k, binds_.at(k));
         }

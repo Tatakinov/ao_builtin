@@ -63,11 +63,11 @@ class WrapTexture {
 class TextureCache {
     private:
         SDL_Renderer *renderer_;
-        std::unordered_map<std::filesystem::path, std::unique_ptr<WrapTexture>> cache_;
+        std::unordered_map<ImagePath, std::unique_ptr<WrapTexture>> cache_;
     public:
         TextureCache();
         ~TextureCache();
-        std::unique_ptr<WrapTexture> &get(const std::filesystem::path &path, SDL_Renderer *renderer, std::unique_ptr<ImageCache> &cache);
+        std::unique_ptr<WrapTexture> &get(const std::filesystem::path &path, const std::optional<int> index, SDL_Renderer *renderer, std::unique_ptr<ImageCache> &cache);
         void clear() {
             cache_.clear();
         }

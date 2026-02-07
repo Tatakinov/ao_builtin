@@ -4,7 +4,7 @@
 #include "logger.h"
 
 std::unique_ptr<WrapTexture> Element::getTexture(SDL_Renderer *renderer, std::unique_ptr<TextureCache> &texture_cache, std::unique_ptr<ImageCache> &image_cache, int scale) const {
-    auto &src = texture_cache->get(filename, renderer, image_cache);
+    auto &src = texture_cache->get(filename, index, renderer, image_cache);
     auto dst = std::make_unique<WrapTexture>(renderer, src->width(), src->height(), src->isUpconverted());
     SDL_BlendMode mode = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD);
     switch (method) {
@@ -43,7 +43,7 @@ std::unique_ptr<WrapTexture> Element::getTexture(SDL_Renderer *renderer, std::un
 }
 
 std::unique_ptr<WrapSurface> Element::getSurface(std::unique_ptr<ImageCache> &cache, int scale) const {
-    auto &info = cache->get(filename);
+    auto &info = cache->get(filename, index);
     if (!info) {
         Logger::log("invalid info");
         std::unique_ptr<WrapSurface> invalid;

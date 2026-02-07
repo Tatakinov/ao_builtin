@@ -43,17 +43,18 @@ TextureCache::~TextureCache() {
     cache_.clear();
 }
 
-std::unique_ptr<WrapTexture> &TextureCache::get(const std::filesystem::path &path, SDL_Renderer *renderer, std::unique_ptr<ImageCache> &image_cache) {
-    auto &info = image_cache->get(path);
+std::unique_ptr<WrapTexture> &TextureCache::get(const std::filesystem::path &path, std::optional<int> index, SDL_Renderer *renderer, std::unique_ptr<ImageCache> &image_cache) {
+    auto &info = image_cache->get(path, index);
     if (!info) {
         return invalid_texture;
     }
-    if (cache_.contains(path)) {
-        if (cache_.at(path)->isUpconverted() || cache_.at(path)->isUpconverted() == info->isUpconverted()) {
-            return cache_.at(path);
+    ImagePath key = {path, index};
+    if (cache_.contains(key)) {
+        if (cache_.at(key)->isUpconverted() || cache_.at(key)->isUpconverted() == info->isUpconverted()) {
+            return cache_.at(key);
         }
     }
     WrapSurface surface(info.value());
-    cache_[path] = std::make_unique<WrapTexture>(renderer, surface.surface(), surface.isUpconverted());
-    return cache_.at(path);
+    cache_[key] = std::make_unique<WrapTexture>(renderer, surface.surface(), surface.isUpconverted());
+    return cache_.at(key);
 }

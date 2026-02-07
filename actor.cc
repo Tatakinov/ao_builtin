@@ -110,6 +110,18 @@ void Actor::activate(From from) {
     wait_ = wait(p.wait_min, p.wait_max);
 }
 
+void Actor::inactivate() {
+    active_ = false;
+    pattern_ = {
+        .method = Method::Overlay,
+        .index = -1,
+        .id = -1,
+        .wait_min = 0, .wait_max = 0,
+        .x = 0, .y = 0,
+        .ids = {}
+    };
+}
+
 const Pattern &Actor::currentPattern() const {
     return pattern_;
 }

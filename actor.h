@@ -23,10 +23,7 @@ class Actor {
         bool active() const {
             return active_;
         }
-        void inactivate() {
-            active_ = false;
-            pattern_ = {Method::Overlay, -1, 0, 0, 0, 0, {}};
-        }
+        void inactivate();
         const Pattern &currentPattern() const;
         void update(int elapsed);
         const std::unordered_set<Interval> &interval() const {

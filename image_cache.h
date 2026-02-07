@@ -10,7 +10,29 @@
 #include <optional>
 #include <queue>
 #include <unordered_map>
+#include <utility>
 #include <vector>
+
+#include <SDL3/SDL_surface.h>
+
+struct ImagePath {
+    std::filesystem::path path;
+    std::optional<int> index;
+    bool operator==(const ImagePath &rhs) const {
+        return path == rhs.path && index == rhs.index;
+    }
+};
+
+template<>
+struct std::hash<ImagePath> {
+    size_t operator ()(const ImagePath &p) const {
+        size_t hash = std::hash<std::filesystem::path>()(p.path);
+        if (p.index) {
+            hash ^= std::hash<int>()(p.index.value());
+        }
+        return hash;
+    }
+};
 
 class ImageInfo {
     private:
@@ -42,15 +64,16 @@ class ImageCache {
         std::mutex mutex_;
         std::condition_variable cond_;
         std::unique_ptr<std::thread> th_;
-        std::queue<std::filesystem::path> queue_;
-        std::unordered_map<std::filesystem::path, std::optional<ImageInfo>> cache_orig_;
-        std::unordered_map<std::filesystem::path, std::optional<ImageInfo>> cache_;
+        std::queue<ImagePath> queue_;
+        std::unordered_map<ImagePath, std::optional<ImageInfo>> cache_orig_;
+        std::unordered_map<ImagePath, std::optional<ImageInfo>> cache_;
 #if defined(USE_ONNX)
         Ort::Env env_;
         Ort::Session session_;
 #endif // USE_ONNX
 
-        std::optional<ImageInfo> &getOriginal(const std::filesystem::path &path);
+        std::optional<ImageInfo> load(const ImagePath &p, SDL_Surface *in);
+        std::optional<ImageInfo> &getOriginal(const std::filesystem::path &path, const std::optional<int> &index);
 
     public:
 #if defined(USE_ONNX)
@@ -61,7 +84,7 @@ class ImageCache {
 #endif // USE_ONNX
         ~ImageCache();
         void setScale(int scale);
-        std::optional<ImageInfo> &get(const std::filesystem::path &path);
+        std::optional<ImageInfo> &get(const std::filesystem::path &path, const std::optional<int> index = std::nullopt);
         void clearCache();
 };
 

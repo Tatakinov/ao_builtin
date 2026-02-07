@@ -18,9 +18,10 @@ struct Element {
     Method method;
     int x, y;
     std::filesystem::path filename;
+    std::optional<int> index;
     bool operator==(const Element &rhs) const {
         const auto &lhs = *this;
-        return lhs.method == rhs.method && lhs.x == rhs.x && lhs.y == rhs.y && lhs.filename == rhs.filename;
+        return lhs.method == rhs.method && lhs.x == rhs.x && lhs.y == rhs.y && lhs.filename == rhs.filename && lhs.index == rhs.index;
     }
     std::unique_ptr<WrapSurface> getSurface(std::unique_ptr<ImageCache> &cache, int scale) const;
     std::unique_ptr<WrapTexture> getTexture(SDL_Renderer *renderer, std::unique_ptr<TextureCache> &texture_cache, std::unique_ptr<ImageCache> &image_cache, int scale) const;
@@ -40,7 +41,7 @@ struct std::hash<Element> {
 
 struct Pattern {
     Method method;
-    int id, wait_min, wait_max, x, y;
+    int index, id, wait_min, wait_max, x, y;
     std::vector<int> ids;
 };
 

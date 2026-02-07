@@ -28,7 +28,7 @@ enum class Method {
     Base, Overlay, OverlayFast, OverlayMultiply, Replace,
     Interpolate, Asis, Move, Bind, Add, Reduce, Insert,
     Start, Stop, AlternativeStart, AlternativeStop,
-    ParallelStart, ParallelStop,
+    ParallelStart, ParallelStop, Import,
 };
 
 enum class Interval {
