@@ -463,15 +463,19 @@ void Surfaces::parse(const std::filesystem::path &path) {
                             // unreachable
                             assert(false);
                         }
-                        // TODO index
-                        if (surface->animation[id].pattern.size() > n) {
-                            surface->animation[id].pattern[n] = p;
+                        int last_index = -1;
+                        if (surface->animation[id].pattern.size() > 0) {
+                            last_index = surface->animation[id].pattern.back().index;
+                        }
+                        last_index++;
+                        if (last_index > n) {
+                            //surface->animation[id].pattern[n] = p;
                         }
                         else {
-                            while (surface->animation[id].pattern.size() < n) {
+                            while (last_index < n) {
                                 surface->animation[id].pattern.push_back({
                                     .method = Method::Overlay,
-                                    .index = -1,
+                                    .index = last_index++,
                                     .id = -1,
                                     .wait_min = 0, .wait_max = 0,
                                     .x = 0, .y = 0, .ids = {}});
