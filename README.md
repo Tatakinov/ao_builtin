@@ -5,9 +5,7 @@
 伺かのAOプロトコルを利用したシェル描画プログラムのリファレンス実装です。
 ベースウェアから処理を切り離すことを目的として作られています。
 
-現状Linux + ninix-kagariのみの対応です。
-
-Windowsでもxdg-\*を除外してコンパイルすれば動くはずです。
+現状ninix-kagariのみの対応です。
 
 ## Requirements
 
@@ -18,9 +16,17 @@ Windowsでもxdg-\*を除外してコンパイルすれば動くはずです。
 - wayland-client(Linux)
 - onnxruntime(optional)
 
+## How to Build
+
+```bash
+$ git clone --recursive https://github.com/Tatakinov/ao_builtin
+$ cd ao_builtin
+$ make
+```
+
 ## 使い方
 
-`make`して実行ファイル`ao_builtin.exe`を作り、適当なディレクトリ`/path/to/ao`に放り込みます。
+`ao_builtin.exe`を適当なディレクトリ`/path/to/ao`に放り込みます。
 
 ninixを次の様に呼び出します。
 
@@ -53,6 +59,8 @@ NINIX_ENABLE_SORAKADO=1 AO_PATH="/path/to/ao" ninix
 ## LICENSE
 
 基本的にはMIT-0ですが、ソースファイルにライセンスの記述があるものはそちらが優先されます。
+
+libfontlist(MIT)を利用しています。
 
 また、以下のソースコードを参考にしています。
 [ONNXRuntime-example](https://github.com/microsoft/onnxruntime-inference-examples/blob/main/c_cxx/MNIST/MNIST.cpp) / MIT License (C) Microsoft
