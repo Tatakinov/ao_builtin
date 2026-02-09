@@ -1,4 +1,5 @@
 #include "image_cache.h"
+#include "misc.h"
 
 #include <cassert>
 #include <cmath>
@@ -14,7 +15,11 @@ ImageCache::ImageCache(const std::filesystem::path &exe_dir, bool use_self_alpha
     std::filesystem::path model_path = exe_dir / "model.onnx";
     try {
         Ort::SessionOptions session_options;
+#if defined(IS_WINDOWS)
+        session_ = {env_, model_path.wstring().c_str(), session_options};
+#else
         session_ = {env_, model_path.string().c_str(), session_options};
+#endif // Windows
         th_ = std::make_unique<std::thread>([&]() {
             while (true) {
                 ImagePath p;
@@ -27,7 +32,7 @@ ImageCache::ImageCache(const std::filesystem::path &exe_dir, bool use_self_alpha
                     scale = scale_;
                 }
                 int num_resize = std::ceil(std::log2(scale_ / 100.0));
-                auto &info = cache_orig_.at(p.path, p.index);
+                auto &info = cache_orig_.at(p);
                 int w = info->width();
                 int h = info->height();
                 std::vector<unsigned char> src;
