@@ -15,6 +15,7 @@ ImageCache::ImageCache(const std::filesystem::path &exe_dir, bool use_self_alpha
     std::filesystem::path model_path = exe_dir / "model.onnx";
     try {
         Ort::SessionOptions session_options;
+        session_options.SetIntraOpNumThreads(1);
 #if defined(IS_WINDOWS)
         session_ = {env_, model_path.wstring().c_str(), session_options};
 #else
