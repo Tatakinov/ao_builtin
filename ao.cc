@@ -68,10 +68,9 @@ bool Ao::init() {
             if (std::cin.eof() || len == 0) {
                 break;
             }
-            char *buffer = new char[len];
-            std::cin.read(buffer, len);
-            std::string request(buffer, len);
-            delete[] buffer;
+            std::string request;
+            request.resize(len);
+            std::cin.read(request.data(), len);
             if (std::cin.gcount() < len) {
                 break;
             }
@@ -109,10 +108,12 @@ bool Ao::init() {
             }
             else {
                 std::vector<std::string> args;
+                args.reserve(std::count(request.begin(), request.end(), '\x0a'));
                 args.push_back(event);
                 for (int i = 0; ; i++) {
-                    if (req(i)) {
-                        args.push_back(req(i).value());
+                    auto v = req(i);
+                    if (v) {
+                        args.push_back(v.value());
                     }
                     else {
                         break;
@@ -487,28 +488,30 @@ void Ao::run() {
                 startAnimation(side, id);
             }
         }
-        else if (args[0] == "Bind" && args.size() == 6) {
-            int side;
-            BindFlag flag = BindFlag::Toggle;
-            auto arg = args[5];
-            if (arg == "true") {
-                flag = BindFlag::True;
-            }
-            else if (arg == "false") {
-                flag = BindFlag::False;
-            }
-            util::to_x(args[1], side);
-            do {
-                auto key = args[2] + "," + args[3];
-                if (!bind_id_.contains(side)) {
-                    break;
+        else if (args[0] == "Bind") {
+            for (int i = 0; i + 5 < args.size(); i += 5) {
+                int side;
+                BindFlag flag = BindFlag::Toggle;
+                auto arg = args[i + 5];
+                if (arg == "true") {
+                    flag = BindFlag::True;
                 }
-                if (!bind_id_.at(side).contains(key)) {
-                    break;
+                else if (arg == "false") {
+                    flag = BindFlag::False;
                 }
-                int id = bind_id_.at(side).at(key);
-                bind(side, id, args[4], flag);
-            } while (false);
+                util::to_x(args[i + 1], side);
+                do {
+                    auto key = args[i + 2] + "," + args[i + 3];
+                    if (!bind_id_.contains(side)) {
+                        break;
+                    }
+                    if (!bind_id_.at(side).contains(key)) {
+                        break;
+                    }
+                    int id = bind_id_.at(side).at(key);
+                    bind(side, id, args[i + 4], flag);
+                } while (false);
+            }
         }
         else if (args[0] == "OnScriptBegin") {
             raise();
