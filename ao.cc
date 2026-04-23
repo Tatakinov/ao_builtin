@@ -513,10 +513,16 @@ void Ao::run() {
                 } while (false);
             }
         }
+        else if (args[0] == "OnScopeChange") {
+        }
         else if (args[0] == "OnScriptBegin") {
-            raise();
         }
         else if (args[0] == "OnScriptEnd") {
+        }
+        else if (args[0] == "Raise") {
+            int side;
+            util::to_x(args[1], side);
+            raise(side);
         }
     }
     std::vector<int> keys;
@@ -539,10 +545,11 @@ void Ao::run() {
     }
 }
 
-void Ao::raise() {
-    for (auto &[_, v] : characters_) {
-        v->raise();
+void Ao::raise(int side) {
+    if (!characters_.contains(side)) {
+        return;
     }
+    characters_[side]->raise();
 }
 
 namespace {

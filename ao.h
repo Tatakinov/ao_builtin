@@ -81,7 +81,7 @@ class Ao {
 
         void hide(int side);
 
-        void raise();
+        void raise(int side);
 
         void setSurface(int side, int id);
 

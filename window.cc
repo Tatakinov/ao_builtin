@@ -395,6 +395,10 @@ void Window::button(const SDL_MouseButtonEvent &event) {
     if (mouse_state_[event.button].press == event.down) {
         return;
     }
+    if (event.down) {
+        Request req = {"EXECUTE", "RaiseBalloon", {util::to_s(parent_->side())}};
+        parent_->enqueueDirectSSTP({req});
+    }
     mouse_state_[event.button].press = event.down;
     if (event.button == MOUSE_BUTTON_LEFT && !mouse_state_[event.button].press) {
         parent_->resetDrag();
