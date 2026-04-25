@@ -322,7 +322,9 @@ void Window::clearCache() {
 }
 
 void Window::raise() {
-    SDL_RaiseWindow(window_);
+    if (SDL_GetWindowFlags(window_) & SDL_WINDOW_HIDDEN) {
+        SDL_RaiseWindow(window_);
+    }
 }
 
 void Window::key(const SDL_KeyboardEvent &event) {
