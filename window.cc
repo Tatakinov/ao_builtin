@@ -524,6 +524,20 @@ void Window::wheel(const SDL_MouseWheelEvent &event) {
     // TODO stub
 }
 
+void Window::drop(const SDL_WindowID id, const std::vector<std::string> &file_list) {
+    if (id != SDL_GetWindowID(window_)) {
+        return;
+    }
+    std::vector<std::string> args;
+    args.reserve(1 + file_list.size());
+    args.push_back(util::to_s(parent_->side()));
+    for (auto &path : file_list) {
+        args.push_back(path);
+    }
+    Request req = {"EXECUTE", "AnalyzeFileMagic", args};
+    parent_->enqueueDirectSSTP({req});
+}
+
 void Window::maximized(const SDL_WindowEvent &event) {
     if (event.windowID != SDL_GetWindowID(window_)) {
         return;

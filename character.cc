@@ -470,6 +470,11 @@ void Character::wheel(const SDL_MouseWheelEvent &event) {
         v->wheel(event);
     }
 }
+void Character::drop(const SDL_WindowID id, const std::vector<std::string> &list) {
+    for (auto &[_, v] : windows_) {
+        v->drop(id, list);
+    }
+}
 
 void Character::maximized(const SDL_WindowEvent &event) {
     for (auto &[_, v] : windows_) {

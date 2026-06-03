@@ -119,6 +119,7 @@ class Window {
         void motion(const SDL_MouseMotionEvent &event);
         void button(const SDL_MouseButtonEvent &event);
         void wheel(const SDL_MouseWheelEvent &event);
+        void drop(const SDL_WindowID id, const std::vector<std::string> &list);
         void maximized(const SDL_WindowEvent &event);
         int scale() const;
 };

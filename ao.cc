@@ -340,7 +340,9 @@ void Ao::clearCache() {
 
 void Ao::run() {
     SDL_Event event;
+    std::vector<std::string> filelist;
     while ((redrawn_) ? (SDL_PollEvent(&event)) : (SDL_WaitEventTimeout(&event, 10))) {
+        redrawn_ = true;
         switch (event.type) {
             case SDL_EVENT_QUIT:
                 alive_ = false;
@@ -390,7 +392,13 @@ void Ao::run() {
                     menu_->wheel(event.wheel);
                 }
                 break;
+            case SDL_EVENT_DROP_COMPLETE:
+                for (auto &[_, v] : characters_) {
+                    v->drop(event.drop.windowID, filelist);
+                }
+                break;
             case SDL_EVENT_DROP_FILE:
+                filelist.push_back(event.drop.data);
                 break;
             case SDL_EVENT_WINDOW_FOCUS_GAINED:
                 if (menu_) {
